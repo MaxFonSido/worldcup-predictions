@@ -9,7 +9,6 @@ import MatchCard, { type MatchView } from "@/components/MatchCard";
 export const dynamic = "force-dynamic";
 
 type Pick = "TEAM_A" | "TEAM_B" | "DRAW";
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default async function MatchesPage() {
   const session = await getSession();
@@ -45,8 +44,13 @@ export default async function MatchesPage() {
 
   const picksLeft = Math.max(0, TOTAL_MATCHES - myPickCount);
 
-  // Only show upcoming games within ~24h of the next kickoff (the "next day" of games).
+  // Show only the games on the next match day (the soonest upcoming calendar date).
+  // Group by date in a North-American zone so evening games stay on the same "day"
+  // as afternoon ones (the published schedule's dates).
   const now = Date.now();
+  const MATCH_TZ = "America/New_York";
+  const dayKey = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: MATCH_TZ });
+
   const upcoming = (matches ?? [])
     .filter(
       (m) => ["SCHEDULED", "TIMED"].includes(m.status) && new Date(m.kickoff_utc).getTime() > now
@@ -55,8 +59,8 @@ export default async function MatchesPage() {
 
   let windowMatches = upcoming;
   if (upcoming.length > 0) {
-    const windowEnd = new Date(upcoming[0].kickoff_utc).getTime() + DAY_MS;
-    windowMatches = upcoming.filter((m) => new Date(m.kickoff_utc).getTime() <= windowEnd);
+    const firstDay = dayKey(upcoming[0].kickoff_utc);
+    windowMatches = upcoming.filter((m) => dayKey(m.kickoff_utc) === firstDay);
   }
 
   const labels = {
