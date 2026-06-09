@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(1200px 500px at 50% -200px, rgba(14, 122, 79, 0.12), transparent 70%),
+    #fbfbfa;
+  color: #14201a;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The pitch stripe used as a subtle header motif */
+.pitch-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #0e7a4f,
+    #0e7a4f 28px,
+    #0c6e47 28px,
+    #0c6e47 56px
+  );
+}
+
+/* Numbers (scores, kickoff times) feel better tabular */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #0e7a4f;
+  outline-offset: 2px;
+}
