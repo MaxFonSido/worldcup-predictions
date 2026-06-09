@@ -20,6 +20,7 @@ create table if not exists matches (
   external_id   bigint unique not null,         -- football-data.org match id
   stage         text not null,                  -- GROUP_STAGE | LAST_32 | LAST_16 | QUARTER_FINALS | SEMI_FINALS | THIRD_PLACE | FINAL
   group_name    text,                           -- e.g. "Group A" for groups, null for knockouts
+  venue         text,                           -- stadium/venue name (when the feed provides it)
   team_a        text not null,
   team_b        text not null,
   team_a_code   text,                           -- 3-letter code

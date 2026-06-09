@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
-import { db, TOTAL_MATCHES } from "@/lib/db";
+import { db } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
 import Nav from "@/components/Nav";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
@@ -9,9 +9,8 @@ import MatchCard, { type MatchView } from "@/components/MatchCard";
 export const dynamic = "force-dynamic";
 
 type Pick = "TEAM_A" | "TEAM_B" | "DRAW";
-const DAY_MS = 24 * 60 * 60 * 1000;
 
-export default async function MatchesPage() {
+export default async function ResultsPage() {
   const session = await getSession();
   if (!session) redirect("/");
 
@@ -22,7 +21,7 @@ export default async function MatchesPage() {
   const supabase = db();
 
   const [{ data: matches }, { data: allPicks }, { data: users }] = await Promise.all([
-    supabase.from("matches").select("*").order("kickoff_utc", { ascending: true }),
+    supabase.from("matches").select("*").order("kickoff_utc", { ascending: false }),
     supabase.from("predictions").select("match_id, user_id, pick"),
     supabase.from("users").select("id, display_name")
   ]);
@@ -31,33 +30,21 @@ export default async function MatchesPage() {
 
   const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
   const myPickByMatch = new Map<string, Pick>();
-  let myPickCount = 0;
 
   for (const p of allPicks ?? []) {
     const list = votersByMatch.get(p.match_id) ?? [];
     list.push({ name: nameById.get(p.user_id) ?? "?", pick: p.pick as Pick });
     votersByMatch.set(p.match_id, list);
-    if (p.user_id === session.userId) {
-      myPickByMatch.set(p.match_id, p.pick as Pick);
-      myPickCount++;
-    }
+    if (p.user_id === session.userId) myPickByMatch.set(p.match_id, p.pick as Pick);
   }
 
-  const picksLeft = Math.max(0, TOTAL_MATCHES - myPickCount);
-
-  // Only show upcoming games within ~24h of the next kickoff (the "next day" of games).
+  // Games that have started or finished (kickoff in the past), or were cancelled/voided.
   const now = Date.now();
-  const upcoming = (matches ?? [])
-    .filter(
-      (m) => ["SCHEDULED", "TIMED"].includes(m.status) && new Date(m.kickoff_utc).getTime() > now
-    )
-    .sort((a, b) => new Date(a.kickoff_utc).getTime() - new Date(b.kickoff_utc).getTime());
-
-  let windowMatches = upcoming;
-  if (upcoming.length > 0) {
-    const windowEnd = new Date(upcoming[0].kickoff_utc).getTime() + DAY_MS;
-    windowMatches = upcoming.filter((m) => new Date(m.kickoff_utc).getTime() <= windowEnd);
-  }
+  const past = (matches ?? []).filter(
+    (m) =>
+      new Date(m.kickoff_utc).getTime() <= now ||
+      ["FINISHED", "IN_PLAY", "PAUSED", "CANCELLED", "SUSPENDED"].includes(m.status)
+  );
 
   const labels = {
     teamAWins: tr.teamAWins,
@@ -75,32 +62,21 @@ export default async function MatchesPage() {
     tapToPick: tr.tapToPick
   };
 
-  let lastStage: string | null = null;
-
   return (
     <>
-      <Nav lang={lang} displayName={session.displayName} active="matches" />
+      <Nav lang={lang} displayName={session.displayName} active="results" />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
-        <div className="mb-5 flex items-center justify-between rounded-2xl bg-pitch-deep px-5 py-4 text-white">
-          <span className="text-sm opacity-90">{tr.picksLeft}</span>
-          <span className="tnum text-2xl font-bold">
-            {picksLeft} <span className="text-base font-normal opacity-70">/ {TOTAL_MATCHES}</span>
-          </span>
-        </div>
+        <h1 className="mb-4 text-xl font-bold text-pitch-deep">{tr.results}</h1>
 
-        {windowMatches.length === 0 && (
+        {past.length === 0 && (
           <p className="rounded-2xl bg-white p-8 text-center text-muted shadow-card">
-            {tr.noUpcoming}
+            {tr.noResults}
           </p>
         )}
 
         <div className="space-y-3">
-          {windowMatches.map((m) => {
-            const stageLabel = m.stage === "GROUP_STAGE" ? tr.groupStage : tr.knockout;
-            const showDivider = m.stage !== lastStage;
-            lastStage = m.stage;
-
+          {past.map((m) => {
             const view: MatchView = {
               id: m.id,
               team_a: m.team_a,
@@ -117,20 +93,14 @@ export default async function MatchesPage() {
             };
 
             return (
-              <div key={m.id}>
-                {showDivider && (
-                  <div className="px-1 pb-1 pt-4 text-xs font-bold uppercase tracking-wide text-muted first:pt-0">
-                    {stageLabel}
-                  </div>
-                )}
-                <MatchCard
-                  match={view}
-                  myPick={myPickByMatch.get(m.id) ?? null}
-                  picks={votersByMatch.get(m.id) ?? []}
-                  lang={lang}
-                  labels={labels}
-                />
-              </div>
+              <MatchCard
+                key={m.id}
+                match={view}
+                myPick={myPickByMatch.get(m.id) ?? null}
+                picks={votersByMatch.get(m.id) ?? []}
+                lang={lang}
+                labels={labels}
+              />
             );
           })}
         </div>

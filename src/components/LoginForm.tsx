@@ -39,7 +39,7 @@ export default function LoginForm({ labels, lang }: { labels: Labels; lang: "en"
       router.refresh();
       return;
     }
-  const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(() => ({}));
     if (data.error === "wrongPin") setError(labels.wrongPin);
     else setError(data.error || labels.badPin);
   }
@@ -50,7 +50,10 @@ export default function LoginForm({ labels, lang }: { labels: Labels; lang: "en"
         <label className="block text-sm font-medium text-muted mb-1">{labels.enterName}</label>
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError("");
+          }}
           placeholder={labels.namePlaceholder}
           className="w-full rounded-xl border border-line bg-white px-4 py-3 text-lg outline-none focus:border-pitch"
         />
@@ -59,7 +62,10 @@ export default function LoginForm({ labels, lang }: { labels: Labels; lang: "en"
         <label className="block text-sm font-medium text-muted mb-1">{labels.enterPin}</label>
         <input
           value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          onChange={(e) => {
+            setPin(e.target.value.replace(/\D/g, "").slice(0, 4));
+            setError("");
+          }}
           inputMode="numeric"
           type="password"
           autoComplete="off"

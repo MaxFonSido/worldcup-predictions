@@ -10,6 +10,7 @@ type ApiMatch = {
   status: string; // SCHEDULED | TIMED | IN_PLAY | PAUSED | FINISHED | POSTPONED | SUSPENDED | CANCELLED | AWARDED
   stage: string; // GROUP_STAGE | LAST_32 | LAST_16 | QUARTER_FINALS | SEMI_FINALS | THIRD_PLACE | FINAL
   group: string | null;
+  venue: string | null;
   homeTeam: ApiTeam;
   awayTeam: ApiTeam;
   score: { winner: string | null; fullTime: { home: number | null; away: number | null } };
@@ -44,6 +45,7 @@ export async function syncMatches(): Promise<{ updated: number }> {
     external_id: m.id,
     stage: m.stage,
     group_name: m.group,
+    venue: m.venue ?? null,
     team_a: m.homeTeam?.name ?? "TBD",
     team_b: m.awayTeam?.name ?? "TBD",
     team_a_code: m.homeTeam?.tla ?? null,

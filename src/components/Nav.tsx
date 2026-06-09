@@ -9,7 +9,7 @@ export default function Nav({
 }: {
   lang: Lang;
   displayName: string;
-  active: "matches" | "leaderboard";
+  active: "matches" | "results" | "leaderboard";
 }) {
   const tr = t(lang);
   const tab = (on: boolean) =>
@@ -32,6 +32,9 @@ export default function Nav({
           <nav className="inline-flex gap-1 rounded-full bg-black/15 p-1">
             <Link href="/matches" className={tab(active === "matches")}>
               {tr.matches}
+            </Link>
+            <Link href="/results" className={tab(active === "results")}>
+              {tr.results}
             </Link>
             <Link href="/leaderboard" className={tab(active === "leaderboard")}>
               {tr.leaderboard}

@@ -12,6 +12,7 @@ export type MatchView = {
   team_a_crest: string | null;
   team_b_crest: string | null;
   kickoff_utc: string;
+  venue: string | null;
   allows_draw: boolean;
   status: string;
   result: string | null; // TEAM_A | TEAM_B | DRAW | VOID | null
@@ -174,6 +175,13 @@ export default function MatchCard({
           )}
         </div>
       </div>
+
+      {match.venue && (
+        <p className="mt-2 flex items-center gap-1 text-xs text-muted">
+          <span aria-hidden>📍</span>
+          <span>{match.venue}</span>
+        </p>
+      )}
 
       {/* Result badge for the player */}
       {finished && selected && (

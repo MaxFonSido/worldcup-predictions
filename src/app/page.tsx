@@ -17,7 +17,7 @@ export default async function LoginPage() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 py-8">
       <div className="mb-8 flex items-center justify-between">
         <span className="text-2xl">⚽️</span>
-        <LangToggle current={lang} />
+        <LangToggle current={lang} variant="onLight" />
       </div>
 
       <div className="flex flex-1 flex-col justify-center">

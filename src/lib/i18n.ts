@@ -40,7 +40,10 @@ const en = {
   emptyBoard: "No one has scored yet. Make some picks!",
   loading: "Loading…",
   groupStage: "Group Stage",
-  knockout: "Knockout"
+  knockout: "Knockout",
+  results: "Results",
+  noUpcoming: "No games in the next day or so — check back soon.",
+  noResults: "No finished games yet."
 };
 
 export type Dict = Record<keyof typeof en, string>;
@@ -83,7 +86,10 @@ const fa: Dict = {
   emptyBoard: "هنوز کسی امتیاز نگرفته. پیش‌بینی کنید!",
   loading: "در حال بارگذاری…",
   groupStage: "مرحله گروهی",
-  knockout: "مرحله حذفی"
+  knockout: "مرحله حذفی",
+  results: "نتایج",
+  noUpcoming: "فعلاً بازی‌ای در یک روز آینده نیست — بعداً سر بزن.",
+  noResults: "هنوز بازی تمام‌شده‌ای نیست."
 };
 
 const dict: Record<Lang, Dict> = { en, fa };
