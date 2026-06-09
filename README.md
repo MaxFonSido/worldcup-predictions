@@ -6,6 +6,7 @@ You don't need to touch the code. Setup is three free accounts and some copy-pas
 
 ---
 
+
 ## What you'll set up
 
 1. **Supabase** — the database (stores players, picks, scores). Free.
