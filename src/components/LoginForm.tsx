@@ -39,8 +39,9 @@ export default function LoginForm({ labels, lang }: { labels: Labels; lang: "en"
       router.refresh();
       return;
     }
-    const data = await res.json().catch(() => ({}));
-    setError(data.error === "wrongPin" ? labels.wrongPin : labels.badPin);
+  const data = await res.json().catch(() => ({}));
+    if (data.error === "wrongPin") setError(labels.wrongPin);
+    else setError(data.error || labels.badPin);
   }
 
   return (
