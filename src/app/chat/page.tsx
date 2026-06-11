@@ -4,6 +4,7 @@ import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import Nav from "@/components/Nav";
 import ChatRoom from "@/components/ChatRoom";
+import { markChatRead } from "@/lib/chat";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,10 @@ export default async function ChatPage() {
     supabase.from("users").select("id, display_name")
   ]);
   const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));
+
+  // Opening the chat marks it read for this user (clears the unread dot).
+  await markChatRead(supabase, session.userId);
+
   const initial = (msgs ?? []).map((m) => ({
     id: m.id as string,
     user_id: m.user_id as string,
@@ -30,7 +35,7 @@ export default async function ChatPage() {
 
   return (
     <>
-      <Nav lang={lang} displayName={session.displayName} active="chat" />
+      <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="chat" />
       <main className="mx-auto max-w-2xl px-5 py-6">
         <h1 className="mb-4 text-xl font-bold text-pitch-deep">{tr.chatTitle}</h1>
         <ChatRoom

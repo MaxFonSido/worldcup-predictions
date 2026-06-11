@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { markChatRead } from "@/lib/chat";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "auth" }, { status: 401 });
   const messages = await recentMessages();
+  await markChatRead(db(), session.userId);
   return NextResponse.json({ messages });
 }
 
@@ -46,6 +48,7 @@ export async function POST(req: Request) {
   const { error } = await supabase.from("messages").insert({ user_id: session.userId, body });
   if (error) return NextResponse.json({ error: "server" }, { status: 500 });
 
+  await markChatRead(supabase, session.userId);
   const messages = await recentMessages();
   return NextResponse.json({ ok: true, messages });
 }

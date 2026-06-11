@@ -64,7 +64,7 @@ export default async function ResultsPage() {
 
   return (
     <>
-      <Nav lang={lang} displayName={session.displayName} active="results" />
+      <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="results" />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
         <h1 className="mb-4 text-xl font-bold text-pitch-deep">{tr.results}</h1>

@@ -43,7 +43,7 @@ export default async function ChampionPage() {
 
   return (
     <>
-      <Nav lang={lang} displayName={session.displayName} active="champion" />
+      <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="champion" />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
         <h1 className="mb-2 text-xl font-bold text-pitch-deep">{tr.championTitle}</h1>

@@ -83,7 +83,7 @@ export default async function MatchesPage() {
 
   return (
     <>
-      <Nav lang={lang} displayName={session.displayName} active="matches" />
+      <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="matches" />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
         <div className="mb-5 flex items-center justify-between rounded-2xl bg-pitch-deep px-5 py-4 text-white">

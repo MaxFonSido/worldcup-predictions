@@ -79,7 +79,7 @@ export default async function LeaderboardPage() {
 
   return (
     <>
-      <Nav lang={lang} displayName={session.displayName} active="leaderboard" />
+      <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="leaderboard" />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
         {/* Finale banner — only when the tournament is decided */}

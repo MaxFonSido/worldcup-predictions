@@ -82,3 +82,6 @@ create table if not exists messages (
 );
 grant all privileges on table messages to anon, authenticated, service_role;
 create index if not exists messages_created_at_idx on messages (created_at);
+
+-- ---- Unread chat dot (added in v7): remembers each user's last chat visit ----
+alter table users add column if not exists chat_last_read_at timestamptz;
