@@ -4,15 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Option = { name: string; titles: number };
-type Labels = { choose: string; save: string; saved: string; titlesWord: string };
+type Labels = {
+  choose: string;
+  save: string;
+  saved: string;
+  titlesWord: string;
+  lockNote: string;
+  lockedMsg: string;
+};
 
 export default function ChampionForm({
   options,
   current,
+  locked,
   labels
 }: {
   options: Option[];
   current: string | null;
+  locked: boolean;
   labels: Labels;
 }) {
   const router = useRouter();
@@ -21,7 +30,7 @@ export default function ChampionForm({
   const [done, setDone] = useState(false);
 
   async function save() {
-    if (!pick || busy) return;
+    if (!pick || busy || locked) return;
     setBusy(true);
     setDone(false);
     const res = await fetch("/api/champion", {
@@ -34,6 +43,16 @@ export default function ChampionForm({
       setDone(true);
       router.refresh();
     }
+  }
+
+  // After kickoff, the pick is frozen — show it read-only.
+  if (locked) {
+    return (
+      <div className="rounded-2xl bg-white p-5 shadow-card">
+        <p className="text-sm text-muted">🔒 {labels.lockedMsg}</p>
+        <p className="mt-2 text-2xl font-bold text-pitch-deep">{current ?? "—"}</p>
+      </div>
+    );
   }
 
   return (
@@ -70,6 +89,8 @@ export default function ChampionForm({
           ✓ {labels.saved} {pick}
         </p>
       )}
+
+      <p className="text-center text-xs text-muted">⏳ {labels.lockNote}</p>
     </div>
   );
 }

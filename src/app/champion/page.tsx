@@ -19,14 +19,26 @@ export default async function ChampionPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const participants = await getParticipants(supabase);
+  const [participants, { data: matches }, { data: users }] = await Promise.all([
+    getParticipants(supabase),
+    supabase.from("matches").select("kickoff_utc").order("kickoff_utc", { ascending: true }).limit(1),
+    supabase.from("users").select("id, display_name, champion_pick")
+  ]);
+
   const options = participants.map((c) => ({ name: c, titles: titlesFor(c) }));
 
-  const { data: me } = await supabase
-    .from("users")
-    .select("champion_pick")
-    .eq("id", session.userId)
-    .maybeSingle();
+  // Locks when the tournament kicks off (earliest match).
+  const firstKickoff = matches && matches.length ? new Date(matches[0].kickoff_utc).getTime() : null;
+  const locked = firstKickoff !== null && Date.now() >= firstKickoff;
+
+  const me = (users ?? []).find((u) => u.id === session.userId);
+  const myPick = (me?.champion_pick as string | null) ?? null;
+
+  // Everyone's picks — visible to all.
+  const everyone = (users ?? [])
+    .filter((u) => u.champion_pick)
+    .map((u) => ({ name: u.display_name as string, country: u.champion_pick as string }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <>
@@ -38,14 +50,38 @@ export default async function ChampionPage() {
 
         <ChampionForm
           options={options}
-          current={me?.champion_pick ?? null}
+          current={myPick}
+          locked={locked}
           labels={{
             choose: tr.championChoose,
             save: tr.championSave,
             saved: tr.championSaved,
-            titlesWord: tr.championTitles
+            titlesWord: tr.championTitles,
+            lockNote: tr.championLockNote,
+            lockedMsg: tr.championLocked
           }}
         />
+
+        <h2 className="mb-2 mt-8 text-sm font-bold uppercase tracking-wide text-muted">
+          {tr.everyonesPicks}
+        </h2>
+        {everyone.length === 0 ? (
+          <p className="rounded-2xl bg-white p-6 text-center text-muted shadow-card">
+            {tr.championNone}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {everyone.map((e) => (
+              <div
+                key={e.name}
+                className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-card"
+              >
+                <span className="font-medium">{e.name}</span>
+                <span className="font-semibold text-pitch-deep">🏆 {e.country}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </>
   );

@@ -15,7 +15,17 @@ export async function POST(req: Request) {
 
   const supabase = db();
 
-  // Only allow a real participating country (prevents arbitrary input).
+  // Champion picks lock once the tournament kicks off (the earliest match).
+  const { data: first } = await supabase
+    .from("matches")
+    .select("kickoff_utc")
+    .order("kickoff_utc", { ascending: true })
+    .limit(1);
+  if (first && first.length && Date.now() >= new Date(first[0].kickoff_utc).getTime()) {
+    return NextResponse.json({ error: "locked" }, { status: 403 });
+  }
+
+  // Only allow a real participating country.
   const participants = await getParticipants(supabase);
   if (!participants.includes(pick)) {
     return NextResponse.json({ error: "bad" }, { status: 400 });
