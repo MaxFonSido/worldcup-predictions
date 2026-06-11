@@ -54,7 +54,20 @@ const en = {
   championLockNote: "You can change your pick until the tournament kicks off — after that it's locked.",
   championLocked: "Locked — the tournament has started. Your final pick:",
   championNone: "No one has picked yet.",
-  diamondWord: "Diamond Token"
+  diamondWord: "Diamond Token",
+  yourStats: "Your stats",
+  statGolden: "Golden",
+  statWinRate: "Win rate",
+  statStreak: "Streak",
+  finaleTitle: "The World Cup is over! 🎉",
+  finaleBracketWinner: "Champion of the Family Bracket",
+  finaleWorldCup: "World Cup winner",
+  finaleDiamonds: "Diamond Token winners",
+  chatTab: "Chat",
+  chatTitle: "Family Chat",
+  chatPlaceholder: "Type a message…",
+  chatSend: "Send",
+  chatEmpty: "No messages yet — say hi! 👋"
 };
 
 export type Dict = Record<keyof typeof en, string>;
@@ -111,7 +124,20 @@ const fa: Dict = {
   championLockNote: "تا شروع مسابقات می‌تونی انتخابت رو عوض کنی — بعد از اون قفل میشه.",
   championLocked: "قفل شد — مسابقات شروع شده. انتخاب نهایی تو:",
   championNone: "هنوز کسی انتخاب نکرده.",
-  diamondWord: "سکه الماسی"
+  diamondWord: "سکه الماسی",
+  yourStats: "آمار تو",
+  statGolden: "طلایی",
+  statWinRate: "درصد برد",
+  statStreak: "زنجیره",
+  finaleTitle: "جام جهانی تمام شد! 🎉",
+  finaleBracketWinner: "قهرمان جدول خانوادگی",
+  finaleWorldCup: "قهرمان جام جهانی",
+  finaleDiamonds: "برندگان سکه الماسی",
+  chatTab: "گفتگو",
+  chatTitle: "گفتگوی خانوادگی",
+  chatPlaceholder: "یک پیام بنویس…",
+  chatSend: "ارسال",
+  chatEmpty: "هنوز پیامی نیست — سلام کن! 👋"
 };
 
 const dict: Record<Lang, Dict> = { en, fa };

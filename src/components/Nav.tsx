@@ -9,7 +9,7 @@ export default function Nav({
 }: {
   lang: Lang;
   displayName: string;
-  active: "matches" | "results" | "leaderboard" | "champion";
+  active: "matches" | "results" | "leaderboard" | "champion" | "chat";
 }) {
   const tr = t(lang);
   const tab = (on: boolean) =>
@@ -41,6 +41,9 @@ export default function Nav({
             </Link>
             <Link href="/champion" className={tab(active === "champion")}>
               {tr.championTab}
+            </Link>
+            <Link href="/chat" className={tab(active === "chat")}>
+              {tr.chatTab}
             </Link>
           </nav>
 

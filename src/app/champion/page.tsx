@@ -6,6 +6,7 @@ import { syncIfStale } from "@/lib/football";
 import { getParticipants, titlesFor } from "@/lib/champion";
 import Nav from "@/components/Nav";
 import ChampionForm from "@/components/ChampionForm";
+import { emojiFor } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export default async function ChampionPage() {
                 key={e.name}
                 className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-card"
               >
-                <span className="font-medium">{e.name}</span>
+                <span className="font-medium">{emojiFor(e.name)} {e.name}</span>
                 <span className="font-semibold text-pitch-deep">🏆 {e.country}</span>
               </div>
             ))}

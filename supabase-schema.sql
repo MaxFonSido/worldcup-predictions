@@ -72,3 +72,13 @@ from users u
 left join predictions p on p.user_id = u.id
 left join matches m on m.id = p.match_id
 group by u.id, u.display_name;
+
+-- ---- Family chat (added in v6) ----
+create table if not exists messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  body text not null,
+  created_at timestamptz not null default now()
+);
+grant all privileges on table messages to anon, authenticated, service_role;
+create index if not exists messages_created_at_idx on messages (created_at);

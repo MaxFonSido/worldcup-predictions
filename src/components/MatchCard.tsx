@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { emojiFor } from "@/lib/avatar";
 
 type Pick = "TEAM_A" | "TEAM_B" | "DRAW";
 
@@ -99,6 +100,8 @@ export default function MatchCard({
     const isMine = selected === pick;
     const isWinner = finished && match.result === pick;
     const names = voters(pick);
+    const total = picks.length;
+    const pct = total ? Math.round((names.length / total) * 100) : 0;
 
     let cls = "border-line bg-white";
     if (isWinner) cls = "border-gold bg-gold/10";
@@ -113,9 +116,12 @@ export default function MatchCard({
           !locked ? "hover:border-pitch" : ""
         }`}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-1">
           <span className="font-semibold leading-tight">{title}</span>
-          {isWinner && <span className="text-gold">★</span>}
+          <span className="flex shrink-0 items-center gap-1">
+            {total > 0 && <span className="tnum text-xs text-muted">{pct}%</span>}
+            {isWinner && <span className="text-gold">★</span>}
+          </span>
         </div>
         {sub && <span className="text-xs text-muted">{sub}</span>}
         <div className="mt-2 flex flex-wrap gap-1">
@@ -127,7 +133,7 @@ export default function MatchCard({
                 key={n}
                 className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/70"
               >
-                {n}
+                {emojiFor(n)} {n}
               </span>
             ))
           )}
