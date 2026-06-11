@@ -9,11 +9,11 @@ export default function Nav({
 }: {
   lang: Lang;
   displayName: string;
-  active: "matches" | "results" | "leaderboard";
+  active: "matches" | "results" | "leaderboard" | "champion";
 }) {
   const tr = t(lang);
   const tab = (on: boolean) =>
-    `px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+    `px-3 py-2 rounded-full text-sm font-semibold transition-colors ${
       on ? "bg-white text-pitch-deep" : "text-white/85 hover:text-white"
     }`;
 
@@ -28,8 +28,8 @@ export default function Nav({
           <LangToggle current={lang} />
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <nav className="inline-flex gap-1 rounded-full bg-black/15 p-1">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-y-2">
+          <nav className="flex flex-wrap gap-1 rounded-full bg-black/15 p-1">
             <Link href="/matches" className={tab(active === "matches")}>
               {tr.matches}
             </Link>
@@ -39,10 +39,13 @@ export default function Nav({
             <Link href="/leaderboard" className={tab(active === "leaderboard")}>
               {tr.leaderboard}
             </Link>
+            <Link href="/champion" className={tab(active === "champion")}>
+              {tr.championTab}
+            </Link>
           </nav>
 
           <div className="flex items-center gap-3">
-            <span className="text-sm text-white/85">
+            <span className="hidden text-sm text-white/85 sm:inline">
               {tr.hi}, {displayName}
             </span>
             <form action="/api/logout" method="post">

@@ -43,7 +43,14 @@ const en = {
   knockout: "Knockout",
   results: "Results",
   noUpcoming: "No games in the next day or so — check back soon.",
-  noResults: "No finished games yet."
+  noResults: "No finished games yet.",
+  championTab: "Winner",
+  championTitle: "Predict the Champion",
+  championSub: "Who lifts the trophy? Pick the country you think wins the whole tournament.",
+  championChoose: "Choose a country…",
+  championSave: "Save my pick",
+  championSaved: "Saved! You picked",
+  championTitles: "titles"
 };
 
 export type Dict = Record<keyof typeof en, string>;
@@ -89,7 +96,14 @@ const fa: Dict = {
   knockout: "مرحله حذفی",
   results: "نتایج",
   noUpcoming: "فعلاً بازی‌ای در یک روز آینده نیست — بعداً سر بزن.",
-  noResults: "هنوز بازی تمام‌شده‌ای نیست."
+  noResults: "هنوز بازی تمام‌شده‌ای نیست.",
+  championTab: "قهرمان",
+  championTitle: "پیش‌بینی قهرمان",
+  championSub: "کی جام رو بالا می‌بره؟ کشوری که فکر می‌کنی قهرمان کل مسابقات میشه رو انتخاب کن.",
+  championChoose: "یک کشور انتخاب کن…",
+  championSave: "ذخیره انتخاب",
+  championSaved: "ذخیره شد! انتخاب تو:",
+  championTitles: "قهرمانی"
 };
 
 const dict: Record<Lang, Dict> = { en, fa };

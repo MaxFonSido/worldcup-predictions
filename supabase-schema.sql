@@ -11,6 +11,7 @@ create table if not exists users (
   display_name  text unique not null,
   pin_hash      text not null,                  -- bcrypt hash of the 4-digit PIN
   language      text not null default 'en',     -- 'en' | 'fa'
+  champion_pick text,                            -- predicted tournament winner (country name)
   created_at    timestamptz not null default now()
 );
 
