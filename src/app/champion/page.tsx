@@ -3,7 +3,7 @@ import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
-import { getParticipants, titlesFor } from "@/lib/champion";
+import { getParticipants, titlesFor, getChampionLock } from "@/lib/champion";
 import Nav from "@/components/Nav";
 import ChampionForm from "@/components/ChampionForm";
 import { emojiFor } from "@/lib/avatar";
@@ -20,17 +20,15 @@ export default async function ChampionPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [participants, { data: matches }, { data: users }] = await Promise.all([
+  const [participants, lock, { data: users }] = await Promise.all([
     getParticipants(supabase),
-    supabase.from("matches").select("kickoff_utc").order("kickoff_utc", { ascending: true }).limit(1),
+    getChampionLock(supabase),
     supabase.from("users").select("id, display_name, champion_pick")
   ]);
 
   const options = participants.map((c) => ({ name: c, titles: titlesFor(c) }));
 
-  // Locks when the tournament kicks off (earliest match).
-  const firstKickoff = matches && matches.length ? new Date(matches[0].kickoff_utc).getTime() : null;
-  const locked = firstKickoff !== null && Date.now() >= firstKickoff;
+  const locked = !lock.open;
 
   const me = (users ?? []).find((u) => u.id === session.userId);
   const myPick = (me?.champion_pick as string | null) ?? null;
@@ -58,7 +56,7 @@ export default async function ChampionPage() {
             save: tr.championSave,
             saved: tr.championSaved,
             titlesWord: tr.championTitles,
-            lockNote: tr.championLockNote,
+            lockNote: lock.reopened ? tr.championReopenNote : tr.championLockNote,
             lockedMsg: tr.championLocked
           }}
         />

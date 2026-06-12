@@ -6,6 +6,7 @@ export type NewsItem = {
   date: number;
   source: string;
   summary: string;
+  image: string;
 };
 
 type Feed = { url: string; source: string };
@@ -18,7 +19,42 @@ const FEEDS: Record<string, Feed[]> = {
 };
 const FALLBACK: Feed = { url: "https://feeds.bbci.co.uk/sport/football/rss.xml", source: "BBC Sport" };
 
-const parser = new XMLParser({ ignoreAttributes: true });
+// ignoreAttributes:false so we can read image URLs (media:thumbnail url="...", etc.)
+const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
+
+function attrUrl(node: unknown): string {
+  if (!node) return "";
+  const n = Array.isArray(node) ? node[0] : node;
+  const url = (n as Record<string, unknown>)?.["@_url"];
+  return typeof url === "string" ? url : "";
+}
+
+// BBC serves small thumbs (…/standard/240/…) — bump to a sharper width for a magazine look.
+function upgrade(url: string): string {
+  return url.replace("/standard/240/", "/standard/480/").replace("/standard/320/", "/standard/640/");
+}
+
+function pickImage(it: Record<string, unknown>): string {
+  // 1) Media RSS thumbnail (BBC)
+  const thumb = attrUrl(it["media:thumbnail"]);
+  if (thumb) return upgrade(thumb);
+  // 2) Media RSS content
+  const content = attrUrl(it["media:content"]);
+  if (content) return upgrade(content);
+  // 3) Enclosure (only if it's an image)
+  const enc = it["enclosure"];
+  const encNode = Array.isArray(enc) ? enc.find((e) => String((e as Record<string, unknown>)?.["@_type"] ?? "").startsWith("image")) : enc;
+  const encType = String((encNode as Record<string, unknown>)?.["@_type"] ?? "");
+  if (encNode && (encType === "" || encType.startsWith("image"))) {
+    const u = attrUrl(encNode);
+    if (u) return u;
+  }
+  // 4) First <img> inside the description/encoded content
+  const html = String(it["content:encoded"] ?? it["description"] ?? "");
+  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (m) return m[1];
+  return "";
+}
 
 async function fetchOne(feed: Feed): Promise<NewsItem[]> {
   try {
@@ -33,11 +69,18 @@ async function fetchOne(feed: Feed): Promise<NewsItem[]> {
     if (!Array.isArray(items)) items = [items];
     return items
       .map((it: Record<string, unknown>): NewsItem => {
-        const title = (it?.title ?? "").toString().trim();
-        const link = (it?.link ?? "").toString().trim();
-        const summary = (it?.description ?? "").toString().replace(/<[^>]*>/g, "").trim().slice(0, 160);
-        const ts = it?.pubDate ? new Date(it.pubDate as string).getTime() : 0;
-        return { title, link, date: Number.isNaN(ts) ? 0 : ts, source: feed.source, summary };
+        const title = String(it?.title ?? "").trim();
+        const link = String(it?.link ?? "").trim();
+        const summary = String(it?.description ?? "").replace(/<[^>]*>/g, "").trim().slice(0, 160);
+        const ts = it?.pubDate ? new Date(String(it.pubDate)).getTime() : 0;
+        return {
+          title,
+          link,
+          date: Number.isNaN(ts) ? 0 : ts,
+          source: feed.source,
+          summary,
+          image: pickImage(it)
+        };
       })
       .filter((n: NewsItem) => n.title && n.link);
   } catch {

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { type Lang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
-import { hasUnreadChat } from "@/lib/chat";
+import { unreadChatCount } from "@/lib/chat";
 import { isAdmin } from "@/lib/admin";
 import LangToggle from "@/components/LangToggle";
 import ChatBadge from "@/components/ChatBadge";
-import PoolBanner from "@/components/PoolBanner";
+import AnnouncementStrip from "@/components/AnnouncementStrip";
 
 export default async function Nav({
   lang,
@@ -26,7 +26,7 @@ export default async function Nav({
 
   const supabase = db();
   const [unread, admin] = await Promise.all([
-    active === "chat" ? Promise.resolve(false) : hasUnreadChat(supabase, userId),
+    active === "chat" ? Promise.resolve(0) : unreadChatCount(supabase, userId),
     isAdmin(supabase, displayName)
   ]);
 
@@ -87,13 +87,14 @@ export default async function Nav({
         </div>
       </header>
 
-      <PoolBanner
-        hide={active === "pool"}
+      <AnnouncementStrip
+        page={active}
         labels={{
-          join: tr.poolBannerJoin,
-          joined: tr.poolBannerJoined,
-          closesIn: tr.poolClosesIn,
-          cta: tr.poolJoinShort
+          poolOpen: tr.stripPoolOpen,
+          poolCta: tr.poolJoinShort,
+          championOpen: tr.stripChampionOpen,
+          championCta: tr.stripChampionCta,
+          closesIn: tr.poolClosesIn
         }}
       />
     </>

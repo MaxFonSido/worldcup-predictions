@@ -49,6 +49,17 @@ export default async function NewsPage() {
               >
                 <div className="font-semibold leading-snug text-ink">{n.title}</div>
                 {n.summary && <div className="mt-1 text-sm text-muted">{n.summary}</div>}
+                {n.image && (
+                  <div className="mt-3 aspect-[16/9] w-full overflow-hidden rounded-xl bg-line">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={n.image}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
                 <div className="mt-2 text-xs text-muted">
                   {n.source}
                   {n.date ? ` · ${fmt(n.date, lang)}` : ""} ↗

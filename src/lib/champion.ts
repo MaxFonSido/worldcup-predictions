@@ -34,3 +34,26 @@ export async function getParticipants(db: SupabaseClient): Promise<string[]> {
     return byTitles !== 0 ? byTitles : a.localeCompare(b); // then A→Z
   });
 }
+
+// Champion-pick lock state.
+// Normally picks lock at the first kickoff. The organizer can REOPEN them by setting
+// app_meta "champion_closes_at" to a future time — that override then governs the lock,
+// and re-locks automatically once it passes.
+export async function getChampionLock(
+  db: SupabaseClient
+): Promise<{ open: boolean; reopened: boolean; closesAt: string | null }> {
+  const [{ data: meta }, { data: first }] = await Promise.all([
+    db.from("app_meta").select("value").eq("key", "champion_closes_at").maybeSingle(),
+    db.from("matches").select("kickoff_utc").order("kickoff_utc", { ascending: true }).limit(1)
+  ]);
+
+  const closesAt = (meta?.value as string | null) ?? null;
+  const override = closesAt ? new Date(closesAt).getTime() : null;
+  const firstKickoff = first && first.length ? new Date(first[0].kickoff_utc).getTime() : null;
+
+  const deadline = override ?? firstKickoff; // override wins when present
+  const open = deadline === null ? true : Date.now() < deadline;
+  const reopened = override !== null && Date.now() < override;
+
+  return { open, reopened, closesAt };
+}
