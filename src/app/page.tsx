@@ -34,7 +34,8 @@ export default async function LoginPage() {
             loginHint: tr.loginHint,
             wrongPin: tr.wrongPin,
             badName: tr.badName,
-            badPin: tr.badPin
+            badPin: tr.badPin,
+            regClosed: tr.regClosed
           }}
         />
       </div>

@@ -97,7 +97,14 @@ const en = {
   adminPinSub: "Set a new 4-digit PIN for anyone locked out. Their picks and points stay intact.",
   adminNewPin: "New PIN",
   adminReset: "Reset",
-  adminResetDone: "Done ✓"
+  adminResetDone: "Done ✓",
+  regClosed: "Sign-ups are closed — the tournament has already started.",
+  adminRegTitle: "New sign-ups",
+  adminRegSub: "Close sign-ups so no one new can join mid-tournament. Everyone already registered keeps logging in normally.",
+  adminRegStateOpen: "Sign-ups open",
+  adminRegStateClosed: "Sign-ups closed",
+  adminRegClose: "Close sign-ups",
+  adminRegOpen: "Reopen sign-ups"
 };
 
 export type Dict = Record<keyof typeof en, string>;
@@ -197,7 +204,14 @@ const fa: Dict = {
   adminPinSub: "برای هر کسی که قفل شده یک رمز ۴ رقمی جدید بذار. انتخاب‌ها و امتیازهاش محفوظ می‌مونه.",
   adminNewPin: "رمز جدید",
   adminReset: "بازنشانی",
-  adminResetDone: "انجام شد ✓"
+  adminResetDone: "انجام شد ✓",
+  regClosed: "ثبت‌نام بسته شده — مسابقات شروع شده.",
+  adminRegTitle: "ثبت‌نام جدید",
+  adminRegSub: "ثبت‌نام رو ببند تا وسط مسابقات کسی جدید اضافه نشه. هر کسی قبلاً ثبت‌نام کرده مثل قبل وارد میشه.",
+  adminRegStateOpen: "ثبت‌نام باز",
+  adminRegStateClosed: "ثبت‌نام بسته",
+  adminRegClose: "بستن ثبت‌نام",
+  adminRegOpen: "بازکردن ثبت‌نام"
 };
 
 const dict: Record<Lang, Dict> = { en, fa };

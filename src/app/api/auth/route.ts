@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { createSession } from "@/lib/session";
+import { isRegistrationOpen } from "@/lib/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +38,10 @@ export async function POST(req: Request) {
       userId = existing.id;
       await supabase.from("users").update({ language }).eq("id", userId);
     } else {
+      // New name = a sign-up. Blocked once the organizer closes sign-ups.
+      if (!(await isRegistrationOpen(supabase))) {
+        return NextResponse.json({ error: "regClosed" }, { status: 403 });
+      }
       const pin_hash = await bcrypt.hash(pin, 10);
       const { data: created, error: insertError } = await supabase
         .from("users")

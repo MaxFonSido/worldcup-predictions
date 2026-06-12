@@ -12,6 +12,7 @@ type Labels = {
   wrongPin: string;
   badName: string;
   badPin: string;
+  regClosed: string;
 };
 
 export default function LoginForm({ labels, lang }: { labels: Labels; lang: "en" | "fa" }) {
@@ -41,6 +42,7 @@ export default function LoginForm({ labels, lang }: { labels: Labels; lang: "en"
     }
     const data = await res.json().catch(() => ({}));
     if (data.error === "wrongPin") setError(labels.wrongPin);
+    else if (data.error === "regClosed") setError(labels.regClosed);
     else setError(data.error || labels.badPin);
   }
 
