@@ -104,7 +104,11 @@ const en = {
   adminRegStateOpen: "Sign-ups open",
   adminRegStateClosed: "Sign-ups closed",
   adminRegClose: "Close sign-ups",
-  adminRegOpen: "Reopen sign-ups"
+  adminRegOpen: "Reopen sign-ups",
+  newsTab: "News",
+  newsTitle: "World Cup News",
+  newsEmpty: "Couldn't load news right now — try again in a bit.",
+  newsFrom: "Tap a headline to read the full story on the source."
 };
 
 export type Dict = Record<keyof typeof en, string>;
@@ -211,7 +215,11 @@ const fa: Dict = {
   adminRegStateOpen: "ثبت‌نام باز",
   adminRegStateClosed: "ثبت‌نام بسته",
   adminRegClose: "بستن ثبت‌نام",
-  adminRegOpen: "بازکردن ثبت‌نام"
+  adminRegOpen: "بازکردن ثبت‌نام",
+  newsTab: "اخبار",
+  newsTitle: "اخبار جام جهانی",
+  newsEmpty: "الان نمیشه اخبار رو بارگذاری کرد — کمی بعد دوباره امتحان کن.",
+  newsFrom: "برای خواندن کامل خبر، روی تیتر بزن."
 };
 
 const dict: Record<Lang, Dict> = { en, fa };
