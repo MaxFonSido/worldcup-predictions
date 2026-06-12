@@ -45,14 +45,15 @@ export default async function PoolPage() {
     const diamond = champion !== null && champById.get(id) === champion;
     return {
       id,
-      name: nameById.get(id) ?? "?",
+      realName: (e.real_name as string) || nameById.get(id) || "?",
+      loginName: nameById.get(id) ?? "?",
       golden: goldenById.get(id) ?? 0,
       paid: !!e.paid,
       diamond
     };
   });
   participants.sort(
-    (a, b) => b.golden - a.golden || Number(b.diamond) - Number(a.diamond) || a.name.localeCompare(b.name)
+    (a, b) => b.golden - a.golden || Number(b.diamond) - Number(a.diamond) || a.realName.localeCompare(b.realName)
   );
 
   const paidCount = participants.filter((p) => p.paid).length;
@@ -78,7 +79,7 @@ export default async function PoolPage() {
         {winner && (
           <div className="mb-4 rounded-2xl bg-pitch p-5 text-center text-white shadow-card">
             <div className="text-sm opacity-90">{tr.poolWinner}</div>
-            <div className="text-2xl font-extrabold">👑 {winner.name}</div>
+            <div className="text-2xl font-extrabold">👑 {winner.realName}</div>
           </div>
         )}
 
@@ -109,8 +110,9 @@ export default async function PoolPage() {
                   <span className="tnum w-6 text-center font-bold text-muted">{i + 1}</span>
                   <div>
                     <span className="font-semibold">
-                      {emojiFor(p.name)} {p.name}
+                      {emojiFor(p.loginName)} {p.realName}
                     </span>
+                    <span className="ms-2 text-xs font-normal text-muted">{p.loginName}</span>
                     <div className="text-xs">
                       {p.paid ? (
                         <span className="text-pitch">✓ {tr.poolPaid}</span>
