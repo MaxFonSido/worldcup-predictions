@@ -85,3 +85,14 @@ create index if not exists messages_created_at_idx on messages (created_at);
 
 -- ---- Unread chat dot (added in v7): remembers each user's last chat visit ----
 alter table users add column if not exists chat_last_read_at timestamptz;
+
+-- ---- Prize pool + organizer (added in v8) ----
+create table if not exists pool_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade unique,
+  real_name text not null,
+  paid boolean not null default false,
+  created_at timestamptz not null default now()
+);
+grant all privileges on table pool_entries to anon, authenticated, service_role;
+-- app_meta keys used: 'admin_name' (organizer display name), 'pool_closes_at' (ISO timestamp)
