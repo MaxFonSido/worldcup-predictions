@@ -84,7 +84,7 @@ export default async function PoolPage() {
         )}
 
         {!status.joined && status.open && (
-          <PoolJoinForm labels={{ join: tr.poolJoin, yourName: tr.poolYourName, payNote: tr.poolPayNote }} />
+          <PoolJoinForm labels={{ join: tr.poolJoin, firstName: tr.poolFirstName, lastName: tr.poolLastName, payNote: tr.poolPayNote }} />
         )}
         {status.joined && (
           <div className="mb-4 rounded-2xl bg-white p-4 text-center shadow-card">

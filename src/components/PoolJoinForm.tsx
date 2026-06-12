@@ -3,20 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Labels = { join: string; yourName: string; payNote: string };
+type Labels = { join: string; firstName: string; lastName: string; payNote: string };
 
 export default function PoolJoinForm({ labels }: { labels: Labels }) {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [first, setFirst] = useState("");
+  const [last, setLast] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const ready = first.trim().length > 0 && last.trim().length > 0;
+
   async function join() {
-    if (!name.trim() || busy) return;
+    if (!ready || busy) return;
     setBusy(true);
     const res = await fetch("/api/pool/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ realName: name.trim() })
+      body: JSON.stringify({ firstName: first.trim(), lastName: last.trim() })
     });
     setBusy(false);
     if (res.ok) router.refresh();
@@ -24,16 +27,25 @@ export default function PoolJoinForm({ labels }: { labels: Labels }) {
 
   return (
     <div className="mb-4 space-y-3 rounded-2xl bg-white p-5 shadow-card">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={labels.yourName}
-        maxLength={80}
-        className="w-full rounded-xl border border-line px-4 py-3 outline-none focus:border-pitch"
-      />
+      <div className="flex gap-2">
+        <input
+          value={first}
+          onChange={(e) => setFirst(e.target.value)}
+          placeholder={labels.firstName}
+          maxLength={40}
+          className="w-full rounded-xl border border-line px-4 py-3 outline-none focus:border-pitch"
+        />
+        <input
+          value={last}
+          onChange={(e) => setLast(e.target.value)}
+          placeholder={labels.lastName}
+          maxLength={40}
+          className="w-full rounded-xl border border-line px-4 py-3 outline-none focus:border-pitch"
+        />
+      </div>
       <button
         onClick={join}
-        disabled={!name.trim() || busy}
+        disabled={!ready || busy}
         className="w-full rounded-xl bg-gold py-3 text-lg font-semibold text-white shadow-card transition-opacity hover:opacity-95 disabled:opacity-60"
       >
         {labels.join}

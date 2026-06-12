@@ -16,8 +16,10 @@ export async function POST(req: Request) {
   if (status.joined) return NextResponse.json({ error: "already" }, { status: 400 });
 
   const body = await req.json().catch(() => null);
-  const realName = (body?.realName ?? "").toString().trim().slice(0, 80);
-  if (!realName) return NextResponse.json({ error: "badName" }, { status: 400 });
+  const firstName = (body?.firstName ?? "").toString().trim().slice(0, 40);
+  const lastName = (body?.lastName ?? "").toString().trim().slice(0, 40);
+  if (!firstName || !lastName) return NextResponse.json({ error: "badName" }, { status: 400 });
+  const realName = `${firstName} ${lastName}`;
 
   const { error } = await supabase
     .from("pool_entries")
