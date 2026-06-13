@@ -47,6 +47,7 @@ export default async function NewsPage() {
                 rel="noopener noreferrer"
                 className="block rounded-2xl bg-white p-4 shadow-card transition-colors hover:bg-pitch/5"
               >
+                {n.buzz && <span className="buzz-tag mb-1">🍵 {tr.newsBuzz}</span>}
                 <div className="font-semibold leading-snug text-ink">{n.title}</div>
                 {n.summary && <div className="mt-1 text-sm text-muted">{n.summary}</div>}
                 {n.image && (

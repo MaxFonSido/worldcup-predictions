@@ -7,19 +7,30 @@ export type NewsItem = {
   source: string;
   summary: string;
   image: string;
+  buzz: boolean;
 };
 
 type Feed = { url: string; source: string };
 
-// English: BBC Sport football (full of World Cup coverage during the tournament).
-// Farsi: Varzesh3. If the Farsi feed ever fails, we fall back to BBC so the tab is never empty.
-const FEEDS: Record<string, Feed[]> = {
+// Straight news — BBC for English, Varzesh3 for Farsi.
+const NEWS: Record<string, Feed[]> = {
   en: [{ url: "https://feeds.bbci.co.uk/sport/football/rss.xml", source: "BBC Sport" }],
   fa: [{ url: "https://www.varzesh3.com/rss/all", source: "ورزش سه" }]
 };
+
+// "Buzz" — English tabloid gossip, tagged and capped so it sprinkles rather than floods.
+const BUZZ: Feed[] = [
+  { url: "https://www.dailymail.co.uk/sport/football/index.rss", source: "Daily Mail" },
+  { url: "https://www.mirror.co.uk/sport/football/?service=rss", source: "Mirror" }
+];
+
 const FALLBACK: Feed = { url: "https://feeds.bbci.co.uk/sport/football/rss.xml", source: "BBC Sport" };
 
-// ignoreAttributes:false so we can read image URLs (media:thumbnail url="...", etc.)
+const BUZZ_CAP = 6; // most gossip items allowed into the blended feed
+
+const WC_EN = /world cup/i;
+const WC_FA = /جام جهانی/;
+
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
 
 function attrUrl(node: unknown): string {
@@ -35,31 +46,29 @@ function upgrade(url: string): string {
 }
 
 function pickImage(it: Record<string, unknown>): string {
-  // 1) Media RSS thumbnail (BBC)
   const thumb = attrUrl(it["media:thumbnail"]);
   if (thumb) return upgrade(thumb);
-  // 2) Media RSS content
   const content = attrUrl(it["media:content"]);
   if (content) return upgrade(content);
-  // 3) Enclosure (only if it's an image)
   const enc = it["enclosure"];
-  const encNode = Array.isArray(enc) ? enc.find((e) => String((e as Record<string, unknown>)?.["@_type"] ?? "").startsWith("image")) : enc;
+  const encNode = Array.isArray(enc)
+    ? enc.find((e) => String((e as Record<string, unknown>)?.["@_type"] ?? "").startsWith("image"))
+    : enc;
   const encType = String((encNode as Record<string, unknown>)?.["@_type"] ?? "");
   if (encNode && (encType === "" || encType.startsWith("image"))) {
     const u = attrUrl(encNode);
     if (u) return u;
   }
-  // 4) First <img> inside the description/encoded content
   const html = String(it["content:encoded"] ?? it["description"] ?? "");
   const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
   if (m) return m[1];
   return "";
 }
 
-async function fetchOne(feed: Feed): Promise<NewsItem[]> {
+async function fetchOne(feed: Feed, isBuzz: boolean): Promise<NewsItem[]> {
   try {
     const res = await fetch(feed.url, {
-      next: { revalidate: 900 }, // cache for 15 min so we don't hammer the feed
+      next: { revalidate: 900 },
       headers: { "User-Agent": "Mozilla/5.0 (worldcup-predictions news reader)" }
     });
     if (!res.ok) return [];
@@ -79,7 +88,8 @@ async function fetchOne(feed: Feed): Promise<NewsItem[]> {
           date: Number.isNaN(ts) ? 0 : ts,
           source: feed.source,
           summary,
-          image: pickImage(it)
+          image: pickImage(it),
+          buzz: isBuzz
         };
       })
       .filter((n: NewsItem) => n.title && n.link);
@@ -88,10 +98,34 @@ async function fetchOne(feed: Feed): Promise<NewsItem[]> {
   }
 }
 
+function isWorldCup(n: NewsItem, lang: string): boolean {
+  const hay = `${n.title} ${n.summary}`;
+  return lang === "fa" ? WC_FA.test(hay) : WC_EN.test(hay);
+}
+
 export async function fetchNews(lang: string): Promise<NewsItem[]> {
-  const feeds = FEEDS[lang] ?? FEEDS.en;
-  let items = (await Promise.all(feeds.map(fetchOne))).flat();
-  if (items.length === 0) items = await fetchOne(FALLBACK);
+  const newsFeeds = NEWS[lang] ?? NEWS.en;
+
+  let news = (await Promise.all(newsFeeds.map((f) => fetchOne(f, false)))).flat();
+  news = news.filter((n) => isWorldCup(n, lang));
+
+  // Gossip is English-only and World-Cup-filtered, then capped so it never dominates.
+  let buzz: NewsItem[] = [];
+  if (lang !== "fa") {
+    buzz = (await Promise.all(BUZZ.map((f) => fetchOne(f, true)))).flat();
+    buzz = buzz
+      .filter((n) => WC_EN.test(`${n.title} ${n.summary}`))
+      .sort((a, b) => b.date - a.date)
+      .slice(0, BUZZ_CAP);
+  }
+
+  // Safety net: if the World Cup filter leaves no real news (e.g. a quiet day),
+  // fall back to the unfiltered feed so the tab is never blank.
+  if (news.length === 0) {
+    news = await fetchOne(FALLBACK, false);
+  }
+
+  const items = [...news, ...buzz];
   items.sort((a, b) => b.date - a.date);
   return items.slice(0, 25);
 }

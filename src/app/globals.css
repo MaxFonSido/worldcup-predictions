@@ -43,3 +43,113 @@ input:focus-visible {
   outline: 2px solid #0e7a4f;
   outline-offset: 2px;
 }
+
+/* ============================================================
+   DARK MODE
+   Applied automatically (html.dark) after sunset, per location.
+   We remap the app's semantic utilities so every screen follows,
+   keeping the brand: deep pitch green + gold on a night backdrop.
+   ============================================================ */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background:
+    radial-gradient(1200px 500px at 50% -200px, rgba(20, 160, 105, 0.16), transparent 70%),
+    #08110d;
+  color: #e6ece8;
+}
+
+/* Cards, inputs, raised surfaces */
+.dark .bg-white,
+.dark .bg-surface {
+  background-color: #11201a;
+}
+
+/* Text */
+.dark .text-ink {
+  color: #e6ece8;
+}
+.dark .text-muted {
+  color: #8ea399;
+}
+/* Headings/links that are deep green in light mode pop as bright green at night */
+.dark .text-pitch-deep,
+.dark .text-pitch {
+  color: #4fc78d;
+}
+
+/* Hairlines, dividers, image placeholders */
+.dark .bg-line {
+  background-color: #1d2f27;
+}
+.dark .border-line {
+  border-color: #25382f;
+}
+
+/* Shadows vanish on dark — swap the soft drop shadow for a faint ring */
+.dark .shadow-card {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Header stripe: calmer, deeper green at night */
+.dark .pitch-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #0b4d34,
+    #0b4d34 28px,
+    #094029 28px,
+    #094029 56px
+  );
+}
+
+/* Announcement strip: muted amber bar with gold text instead of bright yellow */
+.dark .bg-amber-400 {
+  background-color: #3a2e10;
+}
+.dark .text-amber-950 {
+  color: #f3d88a;
+}
+.dark .bg-amber-950 {
+  background-color: #f3d88a;
+}
+.dark .text-amber-50 {
+  color: #1a1407;
+}
+
+/* Form controls */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #11201a;
+  color: #e6ece8;
+  border-color: #25382f;
+}
+.dark ::placeholder {
+  color: #6f827a;
+}
+
+/* Focus ring stays green but a touch brighter for dark backdrops */
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible {
+  outline-color: #34d399;
+}
+
+/* ---- "Buzz" gossip tag (used in the News feed; works in both themes) ---- */
+.buzz-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #fde2e6;
+  color: #9f1239;
+}
+.dark .buzz-tag {
+  background: #3a1620;
+  color: #fda4af;
+}

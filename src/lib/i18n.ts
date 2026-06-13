@@ -111,8 +111,29 @@ const en = {
   adminRegOpen: "Reopen sign-ups",
   newsTab: "News",
   newsTitle: "World Cup News",
+  newsBuzz: "Buzz",
   newsEmpty: "Couldn't load news right now — try again in a bit.",
-  newsFrom: "Tap a headline to read the full story on the source."
+  newsFrom: "Tap a headline to read the full story on the source.",
+  standingsTab: "Standings",
+  standingsTitle: "Standings",
+  standingsGroups: "Groups",
+  standingsBracket: "Knockouts",
+  standingsGroupWord: "Group",
+  standingsColP: "P",
+  standingsColW: "W",
+  standingsColD: "D",
+  standingsColL: "L",
+  standingsColGD: "GD",
+  standingsColPts: "Pts",
+  standingsQualify: "Top 2 advance to the knockouts.",
+  standingsBracketEmpty: "The knockout stage hasn't started yet — it'll appear here automatically.",
+  standingsTbd: "TBD",
+  roundLast32: "Round of 32",
+  roundLast16: "Round of 16",
+  roundQuarter: "Quarter-finals",
+  roundSemi: "Semi-finals",
+  roundThird: "Third place",
+  roundFinal: "Final"
 };
 
 export type Dict = Record<keyof typeof en, string>;
@@ -226,8 +247,29 @@ const fa: Dict = {
   adminRegOpen: "بازکردن ثبت‌نام",
   newsTab: "اخبار",
   newsTitle: "اخبار جام جهانی",
+  newsBuzz: "حاشیه",
   newsEmpty: "الان نمیشه اخبار رو بارگذاری کرد — کمی بعد دوباره امتحان کن.",
-  newsFrom: "برای خواندن کامل خبر، روی تیتر بزن."
+  newsFrom: "برای خواندن کامل خبر، روی تیتر بزن.",
+  standingsTab: "جدول",
+  standingsTitle: "جدول رده‌بندی",
+  standingsGroups: "گروه‌ها",
+  standingsBracket: "مرحله حذفی",
+  standingsGroupWord: "گروه",
+  standingsColP: "ب",
+  standingsColW: "بر",
+  standingsColD: "م",
+  standingsColL: "با",
+  standingsColGD: "تف",
+  standingsColPts: "امت",
+  standingsQualify: "دو تیم اول به مرحله حذفی صعود می‌کنند.",
+  standingsBracketEmpty: "مرحله حذفی هنوز شروع نشده — به‌صورت خودکار اینجا نمایش داده می‌شود.",
+  standingsTbd: "نامشخص",
+  roundLast32: "یک‌شانزدهم نهایی",
+  roundLast16: "یک‌هشتم نهایی",
+  roundQuarter: "یک‌چهارم نهایی",
+  roundSemi: "نیمه‌نهایی",
+  roundThird: "رده‌بندی سوم",
+  roundFinal: "فینال"
 };
 
 const dict: Record<Lang, Dict> = { en, fa };

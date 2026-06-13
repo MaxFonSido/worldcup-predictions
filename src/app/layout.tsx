@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
+import { headers } from "next/headers";
 import { getLang, dir } from "@/lib/i18n";
+import { isNight } from "@/lib/theme";
 import "./globals.css";
 
 // Vazirmatn covers both Persian and Latin scripts beautifully — one font, both languages.
@@ -23,8 +25,24 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = getLang();
+
+  // Approximate location from the request (set by the host) — no GPS permission needed.
+  const h = headers();
+  const lat = parseFloat(h.get("x-vercel-ip-latitude") ?? "");
+  const lng = parseFloat(h.get("x-vercel-ip-longitude") ?? "");
+  const tz = h.get("x-vercel-ip-timezone");
+  const dark = isNight(
+    Number.isFinite(lat) ? lat : null,
+    Number.isFinite(lng) ? lng : null,
+    tz
+  );
+
   return (
-    <html lang={lang} dir={dir(lang)} className={vazir.variable}>
+    <html
+      lang={lang}
+      dir={dir(lang)}
+      className={`${vazir.variable}${dark ? " dark" : ""}`}
+    >
       <body className="font-sans">{children}</body>
     </html>
   );
