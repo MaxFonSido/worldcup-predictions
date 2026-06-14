@@ -57,6 +57,76 @@ function fmtDate(iso: string): string {
   }
 }
 
+// ─── Welcome email (sent immediately on subscribe) ────────────
+function welcomeHtml(matches: Match[], userId: string): string {
+  const hasMatches = matches.length > 0;
+  const rows = matches
+    .map(
+      (m) =>
+        `<tr>
+          <td style="padding:12px 16px;border-bottom:1px solid #E6E8E3">
+            <strong>${m.team_a} vs ${m.team_b}</strong><br>
+            <span style="color:#6B7A70;font-size:13px">${fmtTime(m.kickoff_utc)} · ${m.group_name ?? m.stage}${m.venue ? ` · ${m.venue}` : ""}</span>
+          </td>
+        </tr>`
+    )
+    .join("");
+
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:500px;margin:0 auto;padding:20px">
+      <div style="background:linear-gradient(180deg,#0E7A4F,#093A2A);border-radius:16px;padding:24px;color:#fff;text-align:center">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#D9A521">FAMILY WORLD CUP · 2026</div>
+        <div style="font-size:24px;font-weight:800;margin-top:10px">You're all set! ⚽</div>
+        <div style="font-size:14px;color:#CFE5DA;margin-top:6px">Match reminders are now on.</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:20px;margin-top:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <p style="font-size:14px;color:#14201A;margin:0">Here's what you'll get:</p>
+        <p style="font-size:13px;color:#6B7A70;margin:8px 0 0">☀️ <strong>Morning email</strong> — today's matches and kickoff times</p>
+        <p style="font-size:13px;color:#6B7A70;margin:6px 0 0">⏰ <strong>1-hour reminder</strong> — only for matches you haven't bet on yet</p>
+      </div>
+      ${hasMatches ? `
+      <div style="margin-top:16px">
+        <div style="font-size:13px;font-weight:700;color:#6B7A70;letter-spacing:1px;margin-bottom:8px">REMAINING TODAY</div>
+        <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+          ${rows}
+        </table>
+      </div>` : ""}
+      <div style="text-align:center;margin-top:20px">
+        <a href="${APP_URL}" style="display:inline-block;background:#0E7A4F;color:#fff;font-weight:700;padding:12px 32px;border-radius:30px;text-decoration:none;font-size:15px">Open the App</a>
+      </div>
+      <p style="text-align:center;font-size:11px;color:#6B7A70;margin-top:24px">
+        <a href="${unsubLink(userId)}" style="color:#6B7A70">Unsubscribe</a>
+      </p>
+    </div>`;
+}
+
+// ─── Send welcome email ───────────────────────────────────────
+export async function sendWelcomeEmail(userId: string, email: string): Promise<boolean> {
+  const supabase = db();
+  const now = new Date();
+
+  // Get remaining matches today (only those not yet kicked off)
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("team_a, team_b, kickoff_utc, stage, group_name, venue")
+    .gt("kickoff_utc", now.toISOString())
+    .lte("kickoff_utc", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString())
+    .order("kickoff_utc", { ascending: true });
+
+  try {
+    await resend().emails.send({
+      from: FROM,
+      to: email,
+      subject: "✅ You're subscribed — match reminders are on!",
+      html: welcomeHtml((matches ?? []) as Match[], userId)
+    });
+    return true;
+  } catch (e) {
+    console.error("Welcome email failed for", email, e);
+    return false;
+  }
+}
+
 // ─── Morning digest ───────────────────────────────────────────
 function digestHtml(matches: Match[], userId: string): string {
   const date = matches.length ? fmtDate(matches[0].kickoff_utc) : "Today";
@@ -200,6 +270,14 @@ export async function sendPreGameReminders(): Promise<number> {
   const subs = await getSubscribers();
   if (subs.length === 0) return 0;
 
+  // Get all predictions for these matches so we can skip already-bet ones
+  const matchIds = toSend.map((s) => s.match.id);
+  const { data: predictions } = await supabase
+    .from("predictions")
+    .select("user_id, match_id")
+    .in("match_id", matchIds);
+  const hasBet = new Set((predictions ?? []).map((p) => `${p.user_id}_${p.match_id}`));
+
   const r = resend();
   let sent = 0;
 
@@ -211,6 +289,9 @@ export async function sendPreGameReminders(): Promise<number> {
     );
 
     for (const sub of subs) {
+      // Skip if this person already placed their bet
+      if (hasBet.has(`${sub.id}_${match.id}`)) continue;
+
       try {
         await r.emails.send({
           from: FROM,

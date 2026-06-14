@@ -5,10 +5,43 @@ import { useState } from "react";
 export default function SubscribeBanner({ subscribed }: { subscribed: boolean }) {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(subscribed);
+  const [justSubscribed, setJustSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  if (done) return null;
+  // Already subscribed from a previous session — show small manage link
+  if (done && !justSubscribed) {
+    return (
+      <div className="mx-4 mb-2 flex items-center justify-center gap-2 text-xs text-muted">
+        <span>📧 Subscribed to match reminders</span>
+        <span>·</span>
+        <button
+          onClick={async () => {
+            await fetch("/api/subscribe", { method: "DELETE" });
+            setDone(false);
+            setJustSubscribed(false);
+          }}
+          className="underline underline-offset-2 transition-colors hover:text-ink"
+        >
+          Unsubscribe
+        </button>
+      </div>
+    );
+  }
+
+  // Just subscribed — show confirmation
+  if (justSubscribed) {
+    return (
+      <div className="mx-4 mb-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 shadow-card dark:border-green-900 dark:bg-green-950/40">
+        <div className="text-sm font-semibold text-green-800 dark:text-green-200">
+          ✅ You're subscribed — match reminders are on!
+        </div>
+        <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+          Check your email — we just sent you a welcome message with today's schedule.
+        </p>
+      </div>
+    );
+  }
 
   async function handleSubscribe() {
     const val = email.trim().toLowerCase();
@@ -26,6 +59,7 @@ export default function SubscribeBanner({ subscribed }: { subscribed: boolean })
       });
       if (res.ok) {
         setDone(true);
+        setJustSubscribed(true);
       } else {
         setError("Something went wrong — try again.");
       }

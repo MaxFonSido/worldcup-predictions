@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,9 @@ export async function POST(req: Request) {
   }
 
   await db().from("users").update({ email }).eq("id", session.userId);
+
+  // Send welcome email immediately (don't block the response)
+  sendWelcomeEmail(session.userId, email).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }
