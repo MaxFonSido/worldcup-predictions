@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { emojiFor } from "@/lib/avatar";
 
 type Reaction = { emoji: string; user_id: string; name: string };
 type Msg = { id: string; user_id: string; name: string; body: string; created_at: string; reactions: Reaction[] };
 
-type Labels = { placeholder: string; send: string; empty: string };
+type Labels = { placeholder: string; send: string; empty: string; react: string };
 
 const EMOJIS = ["👍", "❤️", "😂", "🔥", "⚽", "🎉"];
 
@@ -19,7 +19,6 @@ function fmtTime(iso: string, lang: "en" | "fa") {
   }
 }
 
-// Group reactions by emoji: { "👍": ["Ali", "Sara"], "😂": ["Kiarash"] }
 function groupReactions(reactions: Reaction[]) {
   const map = new Map<string, string[]>();
   for (const r of reactions) {
@@ -45,6 +44,7 @@ export default function ChatRoom({
   const [busy, setBusy] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef<{ id: string; time: number }>({ id: "", time: 0 });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,15 +58,10 @@ export default function ChatRoom({
         if (!res.ok) return;
         const data = await res.json();
         if (alive && Array.isArray(data.messages)) setMessages(data.messages);
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
     };
     const id = setInterval(tick, 4000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
+    return () => { alive = false; clearInterval(id); };
   }, []);
 
   async function send() {
@@ -84,24 +79,19 @@ export default function ChatRoom({
         if (Array.isArray(data.messages)) setMessages(data.messages);
         setText("");
       }
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
-  async function react(messageId: string, emoji: string) {
+  const react = useCallback(async (messageId: string, emoji: string) => {
     setPickerFor(null);
-    // Optimistic update
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== messageId) return m;
         const existing = m.reactions.find((r) => r.user_id === myUserId);
         let newReactions: Reaction[];
         if (existing?.emoji === emoji) {
-          // Toggle off
           newReactions = m.reactions.filter((r) => r.user_id !== myUserId);
         } else {
-          // Replace or add
           newReactions = [
             ...m.reactions.filter((r) => r.user_id !== myUserId),
             { emoji, user_id: myUserId, name: "You" }
@@ -116,14 +106,27 @@ export default function ChatRoom({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId, emoji })
       });
-    } catch {
-      /* next poll corrects */
+    } catch { /* next poll corrects */ }
+  }, [myUserId]);
+
+  function handleBubbleTap(msgId: string) {
+    const now = Date.now();
+    const last = lastTapRef.current;
+    if (last.id === msgId && now - last.time < 400) {
+      // Double-tap → instant heart
+      react(msgId, "❤️");
+      lastTapRef.current = { id: "", time: 0 };
+    } else {
+      lastTapRef.current = { id: msgId, time: now };
     }
   }
 
   return (
     <div className="flex h-[calc(100vh-13rem)] flex-col">
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-2xl bg-white/60 p-4" onClick={() => setPickerFor(null)}>
+      <div
+        className="flex-1 space-y-3 overflow-y-auto rounded-2xl bg-surface/60 p-4"
+        onClick={() => setPickerFor(null)}
+      >
         {messages.length === 0 ? (
           <p className="py-10 text-center text-muted">{labels.empty}</p>
         ) : (
@@ -141,7 +144,8 @@ export default function ChatRoom({
                     </div>
                   )}
                   <div
-                    className={`rounded-2xl px-4 py-2 shadow-card ${
+                    onClick={() => handleBubbleTap(m.id)}
+                    className={`cursor-pointer rounded-2xl px-4 py-2 shadow-card select-none ${
                       mine ? "bg-pitch text-white" : "bg-white text-ink"
                     }`}
                   >
@@ -169,7 +173,7 @@ export default function ChatRoom({
                     </div>
                   )}
 
-                  {/* Time + react button */}
+                  {/* Time + React button */}
                   <div className={`mt-0.5 flex items-center gap-2 ${mine ? "justify-end me-1" : "ms-1"}`}>
                     <span className="text-[10px] text-muted">{fmtTime(m.created_at, lang)}</span>
                     <button
@@ -177,10 +181,9 @@ export default function ChatRoom({
                         e.stopPropagation();
                         setPickerFor(pickerFor === m.id ? null : m.id);
                       }}
-                      className="text-[11px] text-muted/60 transition-colors hover:text-muted"
-                      aria-label="React"
+                      className="rounded-full border border-line bg-white px-2 py-0.5 text-[11px] font-medium text-muted transition-colors hover:border-pitch hover:text-pitch"
                     >
-                      ☺
+                      😊 {labels.react}
                     </button>
                   </div>
 
@@ -194,7 +197,7 @@ export default function ChatRoom({
                         <button
                           key={e}
                           onClick={() => react(m.id, e)}
-                          className={`rounded-full p-1 text-base transition-transform hover:scale-125 ${
+                          className={`rounded-full p-1 text-lg transition-transform hover:scale-125 ${
                             myReaction === e ? "bg-pitch/10" : ""
                           }`}
                         >

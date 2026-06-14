@@ -56,7 +56,7 @@ export default async function ChatPage() {
           myUserId={session.userId}
           lang={lang}
           initial={initial}
-          labels={{ placeholder: tr.chatPlaceholder, send: tr.chatSend, empty: tr.chatEmpty }}
+          labels={{ placeholder: tr.chatPlaceholder, send: tr.chatSend, empty: tr.chatEmpty, react: tr.chatReact }}
         />
       </main>
     </>
