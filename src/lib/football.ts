@@ -1,7 +1,9 @@
 import { db } from "./db";
+import { sendPreGameReminders } from "./email";
 
 const API = "https://api.football-data.org/v4/competitions/WC/matches";
 const STALE_MS = 5 * 60 * 1000; // re-sync at most every 5 minutes on page load
+const REMINDER_MS = 15 * 60 * 1000; // check reminders at most every 15 min
 
 type ApiTeam = { name: string | null; tla: string | null; crest: string | null };
 type ApiMatch = {
@@ -85,6 +87,16 @@ export async function syncIfStale(): Promise<void> {
       .from("app_meta")
       .upsert({ key: "last_sync", value: new Date().toISOString() }, { onConflict: "key" });
     await syncMatches();
+
+    // Pre-game email reminders — check at most every 15 min.
+    try {
+      const { data: lr } = await db().from("app_meta").select("value").eq("key", "last_reminder_check").maybeSingle();
+      const lastReminder = lr?.value ? new Date(lr.value).getTime() : 0;
+      if (Date.now() - lastReminder >= REMINDER_MS) {
+        await db().from("app_meta").upsert({ key: "last_reminder_check", value: new Date().toISOString() }, { onConflict: "key" });
+        await sendPreGameReminders().catch(() => {});
+      }
+    } catch { /* ignore reminder errors */ }
   } catch (e) {
     console.error("syncIfStale failed (ignored):", e);
   }

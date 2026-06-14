@@ -4,6 +4,7 @@ import { getLang, t } from "@/lib/i18n";
 import { db, TOTAL_MATCHES } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
 import Nav from "@/components/Nav";
+import SubscribeBanner from "@/components/SubscribeBanner";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +21,14 @@ export default async function MatchesPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [{ data: matches }, { data: allPicks }, { data: users }] = await Promise.all([
+  const [{ data: matches }, { data: allPicks }, { data: users }, { data: me }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: true }),
     supabase.from("predictions").select("match_id, user_id, pick"),
-    supabase.from("users").select("id, display_name")
+    supabase.from("users").select("id, display_name"),
+    supabase.from("users").select("email").eq("id", session.userId).maybeSingle()
   ]);
+
+  const isSubscribed = !!(me?.email);
 
   const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));
 
@@ -84,6 +88,7 @@ export default async function MatchesPage() {
   return (
     <>
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="matches" />
+      <SubscribeBanner subscribed={isSubscribed} />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
         <div className="mb-5 flex items-center justify-between rounded-2xl bg-pitch-deep px-5 py-4 text-white">
