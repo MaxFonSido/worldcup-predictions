@@ -5,7 +5,7 @@ import { createHmac } from "crypto";
 const resend = () => new Resend(process.env.RESEND_API_KEY);
 
 const APP_URL = "https://worldcup-predictions-psi.vercel.app";
-const FROM = "World Cup Predictions <onboarding@resend.dev>"; // Resend's free-tier sender
+const FROM = "World Cup Predictions <worldcup@havenixsolutions.com>";
 
 // Simple HMAC token for unsubscribe links (no DB lookup needed).
 function unsubToken(userId: string): string {

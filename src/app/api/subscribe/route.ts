@@ -19,8 +19,8 @@ export async function POST(req: Request) {
 
   await db().from("users").update({ email }).eq("id", session.userId);
 
-  // Send welcome email immediately (don't block the response)
-  sendWelcomeEmail(session.userId, email).catch(() => {});
+  // Send welcome email — await it so Vercel doesn't cut it off
+  await sendWelcomeEmail(session.userId, email).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }
