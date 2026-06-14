@@ -3,9 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { emojiFor } from "@/lib/avatar";
 
-type Msg = { id: string; user_id: string; name: string; body: string; created_at: string };
+type Reaction = { emoji: string; user_id: string; name: string };
+type Msg = { id: string; user_id: string; name: string; body: string; created_at: string; reactions: Reaction[] };
 
 type Labels = { placeholder: string; send: string; empty: string };
+
+const EMOJIS = ["👍", "❤️", "😂", "🔥", "⚽", "🎉"];
 
 function fmtTime(iso: string, lang: "en" | "fa") {
   const locale = lang === "fa" ? "fa-IR" : "en-US";
@@ -14,6 +17,16 @@ function fmtTime(iso: string, lang: "en" | "fa") {
   } catch {
     return "";
   }
+}
+
+// Group reactions by emoji: { "👍": ["Ali", "Sara"], "😂": ["Kiarash"] }
+function groupReactions(reactions: Reaction[]) {
+  const map = new Map<string, string[]>();
+  for (const r of reactions) {
+    if (!map.has(r.emoji)) map.set(r.emoji, []);
+    map.get(r.emoji)!.push(r.name);
+  }
+  return map;
 }
 
 export default function ChatRoom({
@@ -30,14 +43,13 @@ export default function ChatRoom({
   const [messages, setMessages] = useState<Msg[]>(initial);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Keep the view pinned to the newest message.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // Poll for new messages every few seconds — keeps it feeling live, stays free.
   useEffect(() => {
     let alive = true;
     const tick = async () => {
@@ -47,7 +59,7 @@ export default function ChatRoom({
         const data = await res.json();
         if (alive && Array.isArray(data.messages)) setMessages(data.messages);
       } catch {
-        /* ignore transient errors */
+        /* ignore */
       }
     };
     const id = setInterval(tick, 4000);
@@ -77,14 +89,49 @@ export default function ChatRoom({
     }
   }
 
+  async function react(messageId: string, emoji: string) {
+    setPickerFor(null);
+    // Optimistic update
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId) return m;
+        const existing = m.reactions.find((r) => r.user_id === myUserId);
+        let newReactions: Reaction[];
+        if (existing?.emoji === emoji) {
+          // Toggle off
+          newReactions = m.reactions.filter((r) => r.user_id !== myUserId);
+        } else {
+          // Replace or add
+          newReactions = [
+            ...m.reactions.filter((r) => r.user_id !== myUserId),
+            { emoji, user_id: myUserId, name: "You" }
+          ];
+        }
+        return { ...m, reactions: newReactions };
+      })
+    );
+    try {
+      await fetch("/api/chat/react", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId, emoji })
+      });
+    } catch {
+      /* next poll corrects */
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-13rem)] flex-col">
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-2xl bg-white/60 p-4">
+      <div className="flex-1 space-y-3 overflow-y-auto rounded-2xl bg-white/60 p-4" onClick={() => setPickerFor(null)}>
         {messages.length === 0 ? (
           <p className="py-10 text-center text-muted">{labels.empty}</p>
         ) : (
           messages.map((m) => {
             const mine = m.user_id === myUserId;
+            const grouped = groupReactions(m.reactions);
+            const myReaction = m.reactions.find((r) => r.user_id === myUserId)?.emoji;
+
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
@@ -100,9 +147,62 @@ export default function ChatRoom({
                   >
                     <span className="whitespace-pre-wrap break-words">{m.body}</span>
                   </div>
-                  <div className={`mt-0.5 text-[10px] text-muted ${mine ? "text-end me-1" : "ms-1"}`}>
-                    {fmtTime(m.created_at, lang)}
+
+                  {/* Reactions display */}
+                  {grouped.size > 0 && (
+                    <div className={`mt-1 flex flex-wrap gap-1 ${mine ? "justify-end me-1" : "ms-1"}`}>
+                      {[...grouped.entries()].map(([emoji, names]) => (
+                        <button
+                          key={emoji}
+                          onClick={(e) => { e.stopPropagation(); react(m.id, emoji); }}
+                          className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] transition-colors ${
+                            myReaction === emoji
+                              ? "border-pitch bg-pitch/10"
+                              : "border-line bg-white"
+                          }`}
+                          title={names.join(", ")}
+                        >
+                          <span>{emoji}</span>
+                          <span className="text-muted">{names.length}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Time + react button */}
+                  <div className={`mt-0.5 flex items-center gap-2 ${mine ? "justify-end me-1" : "ms-1"}`}>
+                    <span className="text-[10px] text-muted">{fmtTime(m.created_at, lang)}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPickerFor(pickerFor === m.id ? null : m.id);
+                      }}
+                      className="text-[11px] text-muted/60 transition-colors hover:text-muted"
+                      aria-label="React"
+                    >
+                      ☺
+                    </button>
                   </div>
+
+                  {/* Emoji picker */}
+                  {pickerFor === m.id && (
+                    <div
+                      className={`mt-1 flex gap-1 rounded-full bg-white px-2 py-1 shadow-card ${mine ? "justify-end" : ""}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {EMOJIS.map((e) => (
+                        <button
+                          key={e}
+                          onClick={() => react(m.id, e)}
+                          className={`rounded-full p-1 text-base transition-transform hover:scale-125 ${
+                            myReaction === e ? "bg-pitch/10" : ""
+                          }`}
+                        >
+                          {e}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
