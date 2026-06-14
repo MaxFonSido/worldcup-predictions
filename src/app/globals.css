@@ -3,6 +3,20 @@
 @tailwind utilities;
 
 :root {
+  --color-ink: 20 32 26;
+  --color-muted: 91 107 98;
+  --color-surface: 251 251 250;
+  --color-line: 230 232 227;
+}
+
+.dark {
+  --color-ink: 230 236 232;
+  --color-muted: 142 163 153;
+  --color-surface: 17 32 26;
+  --color-line: 29 47 39;
+}
+
+:root {
   color-scheme: light;
 }
 
@@ -62,35 +76,30 @@ input:focus-visible {
 }
 
 /* Cards, inputs, raised surfaces */
-.dark .bg-white,
-.dark .bg-surface {
+.dark .bg-white {
   background-color: #11201a;
 }
 
-/* Text */
-.dark .text-ink {
-  color: #e6ece8;
-}
-.dark .text-muted {
-  color: #8ea399;
-}
 /* Headings/links that are deep green in light mode pop as bright green at night */
 .dark .text-pitch-deep,
 .dark .text-pitch {
   color: #4fc78d;
 }
 
-/* Hairlines, dividers, image placeholders */
-.dark .bg-line {
-  background-color: #1d2f27;
-}
-.dark .border-line {
-  border-color: #25382f;
-}
-
 /* Shadows vanish on dark — swap the soft drop shadow for a faint ring */
 .dark .shadow-card {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Red states (missed picks, etc.) */
+.dark .bg-red-50 {
+  background-color: #2a1418;
+}
+.dark .text-red-500 {
+  color: #f87171;
+}
+.dark .border-red-300 {
+  border-color: #7f1d1d;
 }
 
 /* Header stripe: calmer, deeper green at night */

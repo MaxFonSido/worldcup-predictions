@@ -14,10 +14,10 @@ const config: Config = {
           DEFAULT: "#D9A521", // the "Golden Token"
           soft: "#F3D88A"
         },
-        ink: "#14201A",
-        muted: "#5B6B62",
-        surface: "#FBFBFA",
-        line: "#E6E8E3"
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
+        muted: "rgb(var(--color-muted) / <alpha-value>)",
+        surface: "rgb(var(--color-surface) / <alpha-value>)",
+        line: "rgb(var(--color-line) / <alpha-value>)"
       },
       fontFamily: {
         sans: ["var(--font-vazir)", "system-ui", "sans-serif"]
