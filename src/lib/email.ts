@@ -6,6 +6,7 @@ const resend = () => new Resend(process.env.RESEND_API_KEY);
 
 const APP_URL = "https://worldcup-predictions-psi.vercel.app";
 const FROM = "World Cup Predictions <worldcup@havenixsolutions.com>";
+const TZ = "America/New_York"; // all email scheduling uses Eastern Time
 
 // Simple HMAC token for unsubscribe links (no DB lookup needed).
 function unsubToken(userId: string): string {
@@ -13,6 +14,18 @@ function unsubToken(userId: string): string {
     .update(userId)
     .digest("hex")
     .slice(0, 16);
+}
+
+// Get start and end of "today" in Eastern Time, as UTC ISO strings.
+// The World Cup runs June–July = always EDT (UTC-4).
+function todayET(): { start: string; end: string } {
+  const now = new Date();
+  const etDate = now.toLocaleDateString("en-CA", { timeZone: TZ }); // "2026-06-14"
+  // Midnight ET in UTC: June–July is EDT = UTC-4, so add 4 hours
+  const startUTC = new Date(`${etDate}T04:00:00.000Z`);
+  // End of day ET in UTC: 23:59:59 ET = 03:59:59 UTC next day
+  const endUTC = new Date(startUTC.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return { start: startUTC.toISOString(), end: endUTC.toISOString() };
 }
 
 export function unsubLink(userId: string): string {
@@ -37,7 +50,7 @@ function fmtTime(iso: string): string {
     return new Date(iso).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-      timeZone: "America/New_York"
+      timeZone: TZ
     }) + " ET";
   } catch {
     return "";
@@ -50,11 +63,16 @@ function fmtDate(iso: string): string {
       weekday: "long",
       month: "long",
       day: "numeric",
-      timeZone: "America/New_York"
+      timeZone: TZ
     });
   } catch {
     return "";
   }
+}
+
+function fmtStage(stage: string, group: string | null): string {
+  if (group) return group.replace(/^GROUP[_\s]*/i, "Group ");
+  return stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ─── Welcome email (sent immediately on subscribe) ────────────
@@ -66,7 +84,7 @@ function welcomeHtml(matches: Match[], userId: string): string {
         `<tr>
           <td style="padding:12px 16px;border-bottom:1px solid #E6E8E3">
             <strong>${m.team_a} vs ${m.team_b}</strong><br>
-            <span style="color:#6B7A70;font-size:13px">${fmtTime(m.kickoff_utc)} · ${m.group_name ?? m.stage}${m.venue ? ` · ${m.venue}` : ""}</span>
+            <span style="color:#6B7A70;font-size:13px">${fmtTime(m.kickoff_utc)} · ${fmtStage(m.stage, m.group_name)}${m.venue ? ` · ${m.venue}` : ""}</span>
           </td>
         </tr>`
     )
@@ -104,13 +122,14 @@ function welcomeHtml(matches: Match[], userId: string): string {
 export async function sendWelcomeEmail(userId: string, email: string): Promise<boolean> {
   const supabase = db();
   const now = new Date();
+  const { start, end } = todayET();
 
-  // Get remaining matches today (only those not yet kicked off)
+  // Get remaining matches today ET (only those not yet kicked off)
   const { data: matches } = await supabase
     .from("matches")
     .select("team_a, team_b, kickoff_utc, stage, group_name, venue")
     .gt("kickoff_utc", now.toISOString())
-    .lte("kickoff_utc", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString())
+    .lte("kickoff_utc", end)
     .order("kickoff_utc", { ascending: true });
 
   try {
@@ -136,7 +155,7 @@ function digestHtml(matches: Match[], userId: string): string {
         `<tr>
           <td style="padding:12px 16px;border-bottom:1px solid #E6E8E3">
             <strong>${m.team_a} vs ${m.team_b}</strong><br>
-            <span style="color:#6B7A70;font-size:13px">${fmtTime(m.kickoff_utc)} · ${m.group_name ?? m.stage}${m.venue ? ` · ${m.venue}` : ""}</span>
+            <span style="color:#6B7A70;font-size:13px">${fmtTime(m.kickoff_utc)} · ${fmtStage(m.stage, m.group_name)}${m.venue ? ` · ${m.venue}` : ""}</span>
           </td>
         </tr>`
     )
@@ -194,19 +213,13 @@ async function getSubscribers(): Promise<{ id: string; email: string }[]> {
 // ─── Send morning digest ──────────────────────────────────────
 export async function sendMorningDigest(): Promise<number> {
   const supabase = db();
-
-  // Today's matches (UTC day boundaries, but we grab a generous window)
-  const now = new Date();
-  const startOfDay = new Date(now);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-  const endOfDay = new Date(now);
-  endOfDay.setUTCHours(23, 59, 59, 999);
+  const { start, end } = todayET();
 
   const { data: matches } = await supabase
     .from("matches")
     .select("team_a, team_b, kickoff_utc, stage, group_name, venue")
-    .gte("kickoff_utc", startOfDay.toISOString())
-    .lte("kickoff_utc", endOfDay.toISOString())
+    .gte("kickoff_utc", start)
+    .lte("kickoff_utc", end)
     .order("kickoff_utc", { ascending: true });
 
   if (!matches || matches.length === 0) return 0;
