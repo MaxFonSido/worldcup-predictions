@@ -43,7 +43,7 @@ export default function LiveScoreboard() {
 
   useEffect(() => {
     poll();
-    const id = setInterval(poll, 15000); // poll every 15 seconds
+    const id = setInterval(poll, 5000); // poll every 5 seconds
     return () => clearInterval(id);
   }, [poll]);
 

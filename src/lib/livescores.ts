@@ -27,7 +27,7 @@ export async function fetchLiveScores(): Promise<LiveMatch[]> {
   try {
     const res = await fetch(ESPN_URL, {
       headers: { "User-Agent": "Mozilla/5.0 (worldcup-predictions)" },
-      next: { revalidate: 10 } // cache 10 seconds for near-real-time
+      cache: "no-store" // no caching — always fresh for live scores
     });
     if (!res.ok) return [];
     const data = await res.json();
