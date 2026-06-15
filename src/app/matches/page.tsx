@@ -5,6 +5,7 @@ import { db, TOTAL_MATCHES } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
 import Nav from "@/components/Nav";
 import SubscribeBanner from "@/components/SubscribeBanner";
+import LiveScoreboard from "@/components/LiveScoreboard";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
 
 export const dynamic = "force-dynamic";
@@ -88,6 +89,7 @@ export default async function MatchesPage() {
   return (
     <>
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="matches" />
+      <LiveScoreboard />
       <SubscribeBanner subscribed={isSubscribed} />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
