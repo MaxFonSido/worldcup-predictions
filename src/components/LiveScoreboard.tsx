@@ -34,25 +34,39 @@ export default function LiveScoreboard() {
         (m: LiveMatch) => m.status === "in"
       );
       setMatches(live);
-      // Auto-reopen if new matches go live after user dismissed
-      if (live.length > 0 && matches.length === 0 && dismissed) {
-        setDismissed(false);
-      }
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
     }
-  }, [matches.length, dismissed]);
+  }, []);
 
   useEffect(() => {
     poll();
-    const id = setInterval(poll, 30000); // poll every 30 seconds
+    const id = setInterval(poll, 15000); // poll every 15 seconds
     return () => clearInterval(id);
   }, [poll]);
 
-  // Nothing live or user dismissed
-  if (loading || matches.length === 0 || dismissed) return null;
+  // Still loading or no live matches
+  if (loading || matches.length === 0) return null;
+
+  // Dismissed — show floating "LIVE" button to reopen
+  if (dismissed) {
+    return (
+      <button
+        onClick={() => setDismissed(false)}
+        className="fixed bottom-24 end-4 z-40 flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95"
+      >
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+        </span>
+        <span className="text-sm font-bold text-white">
+          LIVE {matches.length > 1 ? `(${matches.length})` : ""}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-pitch-dark via-pitch-deep to-pitch-dark">
@@ -99,7 +113,7 @@ export default function LiveScoreboard() {
               {/* Teams + Score */}
               <div className="flex items-center justify-between">
                 {/* Home */}
-                <div className="flex flex-col items-center gap-2 w-24">
+                <div className="flex w-24 flex-col items-center gap-2">
                   {m.homeLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -128,7 +142,7 @@ export default function LiveScoreboard() {
                 </div>
 
                 {/* Away */}
-                <div className="flex flex-col items-center gap-2 w-24">
+                <div className="flex w-24 flex-col items-center gap-2">
                   {m.awayLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
