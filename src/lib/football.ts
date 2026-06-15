@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { sendPreGameReminders } from "./email";
+import { fixStuckMatches } from "./espn-backup";
 
 const API = "https://api.football-data.org/v4/competitions/WC/matches";
 const STALE_MS = 5 * 60 * 1000; // re-sync at most every 5 minutes on page load
@@ -87,6 +88,9 @@ export async function syncIfStale(): Promise<void> {
       .from("app_meta")
       .upsert({ key: "last_sync", value: new Date().toISOString() }, { onConflict: "key" });
     await syncMatches();
+
+    // ESPN backup: fix matches stuck as IN_PLAY after the game ended.
+    await fixStuckMatches().catch(() => {});
 
     // Pre-game email reminders — check at most every 15 min.
     try {

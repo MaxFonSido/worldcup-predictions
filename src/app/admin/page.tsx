@@ -6,6 +6,7 @@ import { isAdmin, isRegistrationOpen } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import AdminPinReset from "@/components/AdminPinReset";
 import AdminRegistrationToggle from "@/components/AdminRegistrationToggle";
+import AdminSendDigest from "@/components/AdminSendDigest";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,10 @@ export default async function AdminPage() {
             users={list}
             labels={{ newPin: tr.adminNewPin, reset: tr.adminReset, done: tr.adminResetDone }}
           />
+        </section>
+
+        <section className="mt-6">
+          <AdminSendDigest />
         </section>
       </main>
     </>
