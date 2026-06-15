@@ -228,21 +228,20 @@ export async function sendMorningDigest(): Promise<number> {
   if (subs.length === 0) return 0;
 
   const r = resend();
-  let sent = 0;
-  for (const sub of subs) {
-    try {
-      await r.emails.send({
+  try {
+    await r.batch.send(
+      subs.map((sub) => ({
         from: FROM,
         to: sub.email,
         subject: `⚽ Today's Matches — ${matches.length} game${matches.length > 1 ? "s" : ""} to bet on`,
         html: digestHtml(matches as Match[], sub.id)
-      });
-      sent++;
-    } catch (e) {
-      console.error("Digest send failed for", sub.email, e);
-    }
+      }))
+    );
+    return subs.length;
+  } catch (e) {
+    console.error("Batch digest send failed:", e);
+    return 0;
   }
-  return sent;
 }
 
 // ─── Send pre-game reminders ──────────────────────────────────
@@ -292,7 +291,7 @@ export async function sendPreGameReminders(): Promise<number> {
   const hasBet = new Set((predictions ?? []).map((p) => `${p.user_id}_${p.match_id}`));
 
   const r = resend();
-  let sent = 0;
+  const allEmails: { from: string; to: string; subject: string; html: string }[] = [];
 
   for (const { match } of toSend) {
     // Mark as sent immediately to prevent duplicates
@@ -305,18 +304,22 @@ export async function sendPreGameReminders(): Promise<number> {
       // Skip if this person already placed their bet
       if (hasBet.has(`${sub.id}_${match.id}`)) continue;
 
-      try {
-        await r.emails.send({
-          from: FROM,
-          to: sub.email,
-          subject: `⏰ ${match.team_a} vs ${match.team_b} — 1 hour to bet!`,
-          html: reminderHtml(match as Match, sub.id)
-        });
-        sent++;
-      } catch (e) {
-        console.error("Reminder send failed for", sub.email, e);
-      }
+      allEmails.push({
+        from: FROM,
+        to: sub.email,
+        subject: `⏰ ${match.team_a} vs ${match.team_b} — 1 hour to bet!`,
+        html: reminderHtml(match as Match, sub.id)
+      });
     }
   }
-  return sent;
+
+  if (allEmails.length === 0) return 0;
+
+  try {
+    await r.batch.send(allEmails);
+    return allEmails.length;
+  } catch (e) {
+    console.error("Batch reminder send failed:", e);
+    return 0;
+  }
 }

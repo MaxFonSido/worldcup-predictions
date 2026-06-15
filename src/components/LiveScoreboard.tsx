@@ -22,8 +22,23 @@ type LiveMatch = {
 
 export default function LiveScoreboard() {
   const [matches, setMatches] = useState<LiveMatch[]>([]);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("live-dismissed") === "1";
+    }
+    return false;
+  });
   const [loading, setLoading] = useState(true);
+
+  const dismiss = () => {
+    setDismissed(true);
+    sessionStorage.setItem("live-dismissed", "1");
+  };
+
+  const reopen = () => {
+    setDismissed(false);
+    sessionStorage.removeItem("live-dismissed");
+  };
 
   const poll = useCallback(async () => {
     try {
@@ -34,6 +49,11 @@ export default function LiveScoreboard() {
         (m: LiveMatch) => m.status === "in"
       );
       setMatches(live);
+      // When all matches end, reset dismissed so next live match shows the overlay
+      if (live.length === 0 && typeof window !== "undefined") {
+        sessionStorage.removeItem("live-dismissed");
+        setDismissed(false);
+      }
     } catch {
       /* ignore */
     } finally {
@@ -54,7 +74,7 @@ export default function LiveScoreboard() {
   if (dismissed) {
     return (
       <button
-        onClick={() => setDismissed(false)}
+        onClick={() => reopen()}
         className="fixed bottom-24 end-4 z-40 flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95"
       >
         <span className="relative flex h-2.5 w-2.5">
@@ -72,7 +92,7 @@ export default function LiveScoreboard() {
     <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-pitch-dark via-pitch-deep to-pitch-dark">
       {/* Close button */}
       <button
-        onClick={() => setDismissed(true)}
+        onClick={() => dismiss()}
         className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
         aria-label="Close"
       >
