@@ -6,6 +6,7 @@ import { syncIfStale } from "@/lib/football";
 import Nav from "@/components/Nav";
 import SubscribeBanner from "@/components/SubscribeBanner";
 import LiveScoreboard from "@/components/LiveScoreboard";
+import DayAccordion from "@/components/DayAccordion";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +87,28 @@ export default async function MatchesPage() {
     opensIn: tr.opensIn
   };
 
-  let lastDay: string | null = null;
+  // Group matches by day
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  type DayGroup = { key: string; label: string; hasUnlocked: boolean; matches: typeof windowMatches };
+  const dayGroups: DayGroup[] = [];
+  const seenDays = new Set<string>();
+
+  for (const m of windowMatches) {
+    const dk = dayKey(m.kickoff_utc);
+    if (!seenDays.has(dk)) {
+      seenDays.add(dk);
+      dayGroups.push({ key: dk, label: dayLabel(m.kickoff_utc), hasUnlocked: false, matches: [] });
+    }
+    const group = dayGroups[dayGroups.length - 1];
+    group.matches.push(m);
+    // A match is "unlocked" if within 24h of kickoff
+    if (new Date(m.kickoff_utc).getTime() - now <= DAY_MS) {
+      group.hasUnlocked = true;
+    }
+  }
+
+  // Auto-open: first day with an unlocked match, or the first day if all are locked
+  const autoOpenKey = dayGroups.find((g) => g.hasUnlocked)?.key ?? dayGroups[0]?.key ?? "";
 
   return (
     <>
@@ -108,44 +130,43 @@ export default async function MatchesPage() {
           </p>
         )}
 
-        <div className="space-y-3">
-          {windowMatches.map((m) => {
-            const dk = dayKey(m.kickoff_utc);
-            const showDateHeader = dk !== lastDay;
-            lastDay = dk;
+        <div className="space-y-4">
+          {dayGroups.map((group) => (
+            <DayAccordion
+              key={group.key}
+              label={group.label}
+              matchCount={group.matches.length}
+              defaultOpen={group.key === autoOpenKey}
+            >
+              {group.matches.map((m) => {
+                const view: MatchView = {
+                  id: m.id,
+                  team_a: m.team_a,
+                  team_b: m.team_b,
+                  team_a_crest: m.team_a_crest,
+                  team_b_crest: m.team_b_crest,
+                  kickoff_utc: m.kickoff_utc,
+                  venue: m.venue ?? null,
+                  allows_draw: m.allows_draw,
+                  status: m.status,
+                  result: m.result,
+                  score_a: m.score_a,
+                  score_b: m.score_b
+                };
 
-            const view: MatchView = {
-              id: m.id,
-              team_a: m.team_a,
-              team_b: m.team_b,
-              team_a_crest: m.team_a_crest,
-              team_b_crest: m.team_b_crest,
-              kickoff_utc: m.kickoff_utc,
-              venue: m.venue ?? null,
-              allows_draw: m.allows_draw,
-              status: m.status,
-              result: m.result,
-              score_a: m.score_a,
-              score_b: m.score_b
-            };
-
-            return (
-              <div key={m.id}>
-                {showDateHeader && (
-                  <div className="px-1 pb-1 pt-5 text-sm font-bold text-pitch-deep first:pt-0">
-                    {dayLabel(m.kickoff_utc)}
-                  </div>
-                )}
-                <MatchCard
-                  match={view}
-                  myPick={myPickByMatch.get(m.id) ?? null}
-                  picks={votersByMatch.get(m.id) ?? []}
-                  lang={lang}
-                  labels={labels}
-                />
-              </div>
-            );
-          })}
+                return (
+                  <MatchCard
+                    key={m.id}
+                    match={view}
+                    myPick={myPickByMatch.get(m.id) ?? null}
+                    picks={votersByMatch.get(m.id) ?? []}
+                    lang={lang}
+                    labels={labels}
+                  />
+                );
+              })}
+            </DayAccordion>
+          ))}
         </div>
       </main>
     </>

@@ -38,10 +38,15 @@ type Labels = {
   opensIn: string;
 };
 
-const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 
 function fmtCountdown(ms: number, lang: "en" | "fa"): string {
+  if (ms < HOUR_MS) {
+    const mins = Math.max(1, Math.ceil(ms / MINUTE_MS));
+    return lang === "fa" ? `${mins} دقیقه` : `${mins}m`;
+  }
   const hrs = Math.floor(ms / HOUR_MS);
   const days = Math.floor(hrs / 24);
   const remainHrs = hrs % 24;
@@ -238,7 +243,7 @@ export default function MatchCard({
       {/* Options */}
       <div className="mt-3 flex gap-2">
         {option("TEAM_A", match.team_a, labels.teamAWins)}
-        {option("DRAW", labels.draw)}
+        {match.allows_draw && option("DRAW", labels.draw)}
         {option("TEAM_B", match.team_b, labels.teamBWins)}
       </div>
 
