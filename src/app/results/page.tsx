@@ -59,7 +59,8 @@ export default async function ResultsPage() {
     missed: tr.missed,
     voided: tr.voided,
     result: tr.result,
-    tapToPick: tr.tapToPick
+    tapToPick: tr.tapToPick,
+    opensIn: tr.opensIn
   };
 
   return (

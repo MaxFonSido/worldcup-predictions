@@ -29,10 +29,13 @@ export async function POST(req: Request) {
 
   if (!match) return NextResponse.json({ error: "notFound" }, { status: 404 });
 
-  // Lock the moment the match kicks off (uses our stored time, not the live feed,
-  // so locking stays reliable even if the feed is down).
+  // Lock if the match has kicked off OR if it's more than 24 hours away.
+  const kickoffMs = new Date(match.kickoff_utc).getTime();
+  const nowMs = Date.now();
+  const DAY_MS = 24 * 60 * 60 * 1000;
   const locked =
-    new Date(match.kickoff_utc).getTime() <= Date.now() ||
+    kickoffMs <= nowMs ||
+    (kickoffMs - nowMs) > DAY_MS ||
     !["SCHEDULED", "TIMED"].includes(match.status);
 
   if (locked) return NextResponse.json({ error: "locked" }, { status: 403 });

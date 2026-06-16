@@ -49,24 +49,25 @@ export default async function MatchesPage() {
 
   const picksLeft = Math.max(0, TOTAL_MATCHES - myPickCount);
 
-  // Show only the games on the next match day (the soonest upcoming calendar date).
-  // Group by date in a North-American zone so evening games stay on the same "day"
-  // as afternoon ones (the published schedule's dates).
+  // Show ALL upcoming matches, ordered by kickoff time.
+  // Each match card handles its own lock state (open within 24h, locked otherwise).
   const now = Date.now();
   const MATCH_TZ = "America/New_York";
-  const dayKey = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: MATCH_TZ });
+  const dayKey = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-CA", { timeZone: MATCH_TZ });
+  const dayLabel = (iso: string) =>
+    new Date(iso).toLocaleDateString(lang === "fa" ? "fa-IR" : "en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      timeZone: MATCH_TZ
+    });
 
-  const upcoming = (matches ?? [])
+  const windowMatches = (matches ?? [])
     .filter(
       (m) => ["SCHEDULED", "TIMED"].includes(m.status) && new Date(m.kickoff_utc).getTime() > now
     )
     .sort((a, b) => new Date(a.kickoff_utc).getTime() - new Date(b.kickoff_utc).getTime());
-
-  let windowMatches = upcoming;
-  if (upcoming.length > 0) {
-    const firstDay = dayKey(upcoming[0].kickoff_utc);
-    windowMatches = upcoming.filter((m) => dayKey(m.kickoff_utc) === firstDay);
-  }
 
   const labels = {
     teamAWins: tr.teamAWins,
@@ -81,10 +82,11 @@ export default async function MatchesPage() {
     missed: tr.missed,
     voided: tr.voided,
     result: tr.result,
-    tapToPick: tr.tapToPick
+    tapToPick: tr.tapToPick,
+    opensIn: tr.opensIn
   };
 
-  let lastStage: string | null = null;
+  let lastDay: string | null = null;
 
   return (
     <>
@@ -108,9 +110,9 @@ export default async function MatchesPage() {
 
         <div className="space-y-3">
           {windowMatches.map((m) => {
-            const stageLabel = m.stage === "GROUP_STAGE" ? tr.groupStage : tr.knockout;
-            const showDivider = m.stage !== lastStage;
-            lastStage = m.stage;
+            const dk = dayKey(m.kickoff_utc);
+            const showDateHeader = dk !== lastDay;
+            lastDay = dk;
 
             const view: MatchView = {
               id: m.id,
@@ -129,9 +131,9 @@ export default async function MatchesPage() {
 
             return (
               <div key={m.id}>
-                {showDivider && (
-                  <div className="px-1 pb-1 pt-4 text-xs font-bold uppercase tracking-wide text-muted first:pt-0">
-                    {stageLabel}
+                {showDateHeader && (
+                  <div className="px-1 pb-1 pt-5 text-sm font-bold text-pitch-deep first:pt-0">
+                    {dayLabel(m.kickoff_utc)}
                   </div>
                 )}
                 <MatchCard

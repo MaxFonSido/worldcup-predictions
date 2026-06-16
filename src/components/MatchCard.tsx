@@ -35,7 +35,23 @@ type Labels = {
   voided: string;
   result: string;
   tapToPick: string;
+  opensIn: string;
 };
+
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+
+function fmtCountdown(ms: number, lang: "en" | "fa"): string {
+  const hrs = Math.floor(ms / HOUR_MS);
+  const days = Math.floor(hrs / 24);
+  const remainHrs = hrs % 24;
+  if (lang === "fa") {
+    if (days > 0) return `${days} روز و ${remainHrs} ساعت`;
+    return `${hrs} ساعت`;
+  }
+  if (days > 0) return `${days}d ${remainHrs}h`;
+  return `${hrs}h`;
+}
 
 function fmtKickoff(iso: string, lang: "en" | "fa") {
   const locale = lang === "fa" ? "fa-IR-u-ca-persian" : "en-US";
@@ -73,8 +89,15 @@ export default function MatchCard({
 
   const finished = match.status === "FINISHED" && match.result && match.result !== "VOID";
   const voided = match.result === "VOID" || match.status === "CANCELLED";
+
+  const kickoffMs = new Date(match.kickoff_utc).getTime();
+  const nowMs = Date.now();
+  const msUntilKickoff = kickoffMs - nowMs;
+  // "Not yet open" = more than 24 hours before kickoff
+  const notYetOpen = msUntilKickoff > DAY_MS && ["SCHEDULED", "TIMED"].includes(match.status) && !finished && !voided;
   const locked =
-    new Date(match.kickoff_utc).getTime() <= Date.now() ||
+    notYetOpen ||
+    kickoffMs <= nowMs ||
     !["SCHEDULED", "TIMED"].includes(match.status) ||
     finished ||
     voided;
@@ -143,7 +166,7 @@ export default function MatchCard({
   };
 
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-card">
+    <div className={`rounded-2xl bg-white p-4 shadow-card${notYetOpen ? " opacity-60" : ""}`}>
       {/* Top row: teams + status */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -169,6 +192,14 @@ export default function MatchCard({
             <span className="rounded-full bg-ink/10 px-3 py-1 text-xs text-muted">
               {labels.voided}
             </span>
+          ) : notYetOpen ? (
+            <div className="text-end">
+              <div className="flex items-center justify-end gap-1 text-xs text-muted">
+                <span>🔒</span>
+                <span>{labels.opensIn} {fmtCountdown(msUntilKickoff - DAY_MS, lang)}</span>
+              </div>
+              <div className="tnum mt-0.5 text-xs text-muted/70">{fmtKickoff(match.kickoff_utc, lang)}</div>
+            </div>
           ) : locked ? (
             <span className="rounded-full bg-ink/10 px-3 py-1 text-xs font-semibold text-muted">
               {labels.locked}
