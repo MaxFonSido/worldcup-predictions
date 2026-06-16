@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 type LiveMatch = {
   id: string;
@@ -21,8 +21,13 @@ type LiveMatch = {
 };
 
 export default function LiveScoreboard() {
-  const RADIO_URL = "http://player.iranseda.ir/live-player/?VALID=TRUE&CH=18&t=b&auto=true&SAVE=TRUE";
+  const RADIO_STREAM = "http://s0.cdn1.iranseda.ir:1935/liveedge/radio-varzesh/playlist.m3u8";
+  const RADIO_FALLBACK = "http://player.iranseda.ir/live-player/?VALID=TRUE&CH=18&t=b&auto=true&SAVE=TRUE";
   const [matches, setMatches] = useState<LiveMatch[]>([]);
+  const [radioPlaying, setRadioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hlsRef = useRef<any>(null);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("live-dismissed") === "1";
@@ -39,6 +44,57 @@ export default function LiveScoreboard() {
   const reopen = () => {
     setDismissed(false);
     sessionStorage.removeItem("live-dismissed");
+  };
+
+  const toggleRadio = async () => {
+    if (radioPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      setRadioPlaying(false);
+      return;
+    }
+
+    try {
+      const audio = audioRef.current || new Audio();
+      audioRef.current = audio;
+
+      if (audio.canPlayType("application/vnd.apple.mpegurl")) {
+        audio.src = RADIO_STREAM;
+        await audio.play();
+        setRadioPlaying(true);
+      } else {
+        // Load hls.js from CDN if not already loaded
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const w = window as any;
+        if (!w.Hls) {
+          await new Promise<void>((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
+            s.onload = () => resolve();
+            s.onerror = () => reject();
+            document.head.appendChild(s);
+          });
+        }
+        if (w.Hls && w.Hls.isSupported()) {
+          const hls = new w.Hls();
+          hlsRef.current = hls;
+          hls.loadSource(RADIO_STREAM);
+          hls.attachMedia(audio);
+          hls.on(w.Hls.Events.MANIFEST_PARSED, () => { audio.play(); });
+          setRadioPlaying(true);
+        } else {
+          window.open(RADIO_FALLBACK, "_blank");
+        }
+      }
+    } catch {
+      window.open(RADIO_FALLBACK, "_blank");
+    }
   };
 
   const poll = useCallback(async () => {
@@ -75,15 +131,15 @@ export default function LiveScoreboard() {
   if (dismissed) {
     return (
       <div className="fixed bottom-24 end-4 z-40 flex flex-col items-end gap-2">
-        <a
-          href={RADIO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95"
+        <button
+          onClick={toggleRadio}
+          className={`flex items-center gap-2 rounded-full px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95 ${
+            radioPlaying ? "bg-amber-600" : "bg-amber-500"
+          }`}
         >
-          <span className="text-base">📻</span>
-          <span className="text-sm font-bold text-white">Radio</span>
-        </a>
+          <span className="text-base">{radioPlaying ? "🔊" : "📻"}</span>
+          <span className="text-sm font-bold text-white">{radioPlaying ? "On Air" : "Radio"}</span>
+        </button>
         <button
           onClick={() => reopen()}
           className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95"
@@ -206,15 +262,15 @@ export default function LiveScoreboard() {
 
       {/* Radio button */}
       <div className="pb-4 text-center">
-        <a
-          href={RADIO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-full bg-white/15 px-6 py-3 text-white transition-colors hover:bg-white/25 active:scale-95"
+        <button
+          onClick={toggleRadio}
+          className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-white transition-colors active:scale-95 ${
+            radioPlaying ? "bg-amber-500/80" : "bg-white/15 hover:bg-white/25"
+          }`}
         >
-          <span className="text-lg">📻</span>
-          <span className="text-sm font-bold">گزارش زنده فارسی</span>
-        </a>
+          <span className="text-lg">{radioPlaying ? "🔊" : "📻"}</span>
+          <span className="text-sm font-bold">{radioPlaying ? "گزارش زنده — قطع" : "گزارش زنده فارسی"}</span>
+        </button>
       </div>
 
       {/* Bottom hint */}
