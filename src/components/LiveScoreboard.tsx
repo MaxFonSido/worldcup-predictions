@@ -21,6 +21,7 @@ type LiveMatch = {
 };
 
 export default function LiveScoreboard() {
+  const RADIO_URL = "http://player.iranseda.ir/live-player/?VALID=TRUE&CH=18&t=b&auto=true&SAVE=TRUE";
   const [matches, setMatches] = useState<LiveMatch[]>([]);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -73,18 +74,29 @@ export default function LiveScoreboard() {
   // Dismissed — show floating "LIVE" button to reopen
   if (dismissed) {
     return (
-      <button
-        onClick={() => reopen()}
-        className="fixed bottom-24 end-4 z-40 flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95"
-      >
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
-        </span>
-        <span className="text-sm font-bold text-white">
-          LIVE {matches.length > 1 ? `(${matches.length})` : ""}
-        </span>
-      </button>
+      <div className="fixed bottom-24 end-4 z-40 flex flex-col items-end gap-2">
+        <a
+          href={RADIO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95"
+        >
+          <span className="text-base">📻</span>
+          <span className="text-sm font-bold text-white">Radio</span>
+        </a>
+        <button
+          onClick={() => reopen()}
+          className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 shadow-lg transition-transform hover:scale-105 active:scale-95"
+        >
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+          </span>
+          <span className="text-sm font-bold text-white">
+            LIVE {matches.length > 1 ? `(${matches.length})` : ""}
+          </span>
+        </button>
+      </div>
     );
   }
 
@@ -190,6 +202,19 @@ export default function LiveScoreboard() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Radio button */}
+      <div className="pb-4 text-center">
+        <a
+          href={RADIO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full bg-white/15 px-6 py-3 text-white transition-colors hover:bg-white/25 active:scale-95"
+        >
+          <span className="text-lg">📻</span>
+          <span className="text-sm font-bold">گزارش زنده فارسی</span>
+        </a>
       </div>
 
       {/* Bottom hint */}
