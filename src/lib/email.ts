@@ -181,35 +181,39 @@ function digestHtml(
     const oddsSection = m.odds ? `
       <div style="margin-top:14px;background:#f8f7f2;border-radius:14px;padding:14px 16px">
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:#9A8A6B;margin-bottom:10px">EY VAY PREDICTION</div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="text-align:center;flex:1">
-            <div style="font-size:24px;font-weight:800;color:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.homeWin}%</div>
-            <div style="font-size:11px;color:#6B7A70;margin-top:2px">${m.team_a}</div>
-          </div>
-          <div style="text-align:center;width:60px">
-            <div style="font-size:14px;font-weight:700;color:#D9A521">${m.odds.draw}%</div>
-            <div style="font-size:10px;color:#9A8A6B;margin-top:2px">Draw</div>
-          </div>
-          <div style="text-align:center;flex:1">
-            <div style="font-size:24px;font-weight:800;color:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.awayWin}%</div>
-            <div style="font-size:11px;color:#6B7A70;margin-top:2px">${m.team_b}</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:3px;height:6px;border-radius:3px;overflow:hidden;margin-top:10px">
-          <div style="width:${m.odds.homeWin}%;background:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></div>
-          <div style="width:${m.odds.draw}%;background:#D9A521;border-radius:3px"></div>
-          <div style="width:${m.odds.awayWin}%;background:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></div>
-        </div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="33%" align="left" style="vertical-align:bottom">
+              <div style="font-size:28px;font-weight:800;color:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.homeWin}%</div>
+              <div style="font-size:12px;color:#6B7A70;margin-top:2px">${m.team_a}</div>
+            </td>
+            <td width="33%" align="center" style="vertical-align:bottom">
+              <div style="font-size:20px;font-weight:700;color:#D9A521">${m.odds.draw}%</div>
+              <div style="font-size:11px;color:#9A8A6B;margin-top:2px">Draw</div>
+            </td>
+            <td width="33%" align="right" style="vertical-align:bottom">
+              <div style="font-size:28px;font-weight:800;color:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.awayWin}%</div>
+              <div style="font-size:12px;color:#6B7A70;margin-top:2px">${m.team_b}</div>
+            </td>
+          </tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px"><tr>
+          <td width="${m.odds.homeWin}%" style="height:6px;background:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></td>
+          <td width="1%" style="height:6px"></td>
+          <td width="${m.odds.draw}%" style="height:6px;background:#D9A521;border-radius:3px"></td>
+          <td width="1%" style="height:6px"></td>
+          <td width="${m.odds.awayWin}%" style="height:6px;background:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></td>
+        </tr></table>
         ${m.analysis?.en ? `<div style="margin-top:10px;font-size:13px;color:#4A5A52;line-height:1.5;font-style:italic">"${m.analysis.en}"</div>` : ""}
       </div>` : "";
 
     return `
     <div style="background:#fff;border-radius:16px;padding:20px;margin-top:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
       ${weatherLine ? `<div style="text-align:center;font-size:12px;color:#9A8A6B;margin-bottom:12px">${weatherLine}</div>` : ""}
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6B7A70">${fmtStage(m.stage, m.group_name).toUpperCase()}</span>
-        <span style="background:rgba(14,122,79,0.08);color:#0E7A4F;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">${fmtTime(m.kickoff_utc)}</span>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px"><tr>
+        <td align="left" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6B7A70">${fmtStage(m.stage, m.group_name).toUpperCase()}</td>
+        <td align="right"><span style="background:rgba(14,122,79,0.08);color:#0E7A4F;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">${fmtTime(m.kickoff_utc)}</span></td>
+      </tr></table>
       <div style="font-size:18px;font-weight:700;color:#14201A;text-align:center">${m.team_a} vs ${m.team_b}</div>
       ${oddsSection}
     </div>`;
@@ -243,25 +247,38 @@ function digestHtml(
     const oddsFA = m.odds ? `
       <div style="margin-top:12px;background:#f8f7f2;border-radius:12px;padding:12px 14px">
         <div style="font-size:10px;font-weight:700;color:#9A8A6B;margin-bottom:8px;text-align:center">انتخابات ای وای</div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="text-align:center;flex:1"><div style="font-size:20px;font-weight:800;color:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.homeWin}%</div><div style="font-size:11px;color:#6B7A70">${m.team_a}</div></div>
-          <div style="text-align:center;width:50px"><div style="font-size:13px;font-weight:700;color:#D9A521">${m.odds.draw}%</div><div style="font-size:10px;color:#9A8A6B">مساوی</div></div>
-          <div style="text-align:center;flex:1"><div style="font-size:20px;font-weight:800;color:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.awayWin}%</div><div style="font-size:11px;color:#6B7A70">${m.team_b}</div></div>
-        </div>
-        <div style="display:flex;gap:3px;height:5px;border-radius:3px;overflow:hidden;margin-top:8px">
-          <div style="width:${m.odds.homeWin}%;background:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></div>
-          <div style="width:${m.odds.draw}%;background:#D9A521;border-radius:3px"></div>
-          <div style="width:${m.odds.awayWin}%;background:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></div>
-        </div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="33%" align="left" style="vertical-align:bottom">
+              <div style="font-size:24px;font-weight:800;color:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.homeWin}%</div>
+              <div style="font-size:11px;color:#6B7A70">${m.team_a}</div>
+            </td>
+            <td width="33%" align="center" style="vertical-align:bottom">
+              <div style="font-size:16px;font-weight:700;color:#D9A521">${m.odds.draw}%</div>
+              <div style="font-size:10px;color:#9A8A6B">مساوی</div>
+            </td>
+            <td width="33%" align="right" style="vertical-align:bottom">
+              <div style="font-size:24px;font-weight:800;color:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#6B7A70"}">${m.odds.awayWin}%</div>
+              <div style="font-size:11px;color:#6B7A70">${m.team_b}</div>
+            </td>
+          </tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px"><tr>
+          <td width="${m.odds.homeWin}%" style="height:5px;background:${m.odds.homeWin >= m.odds.awayWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></td>
+          <td width="1%" style="height:5px"></td>
+          <td width="${m.odds.draw}%" style="height:5px;background:#D9A521;border-radius:3px"></td>
+          <td width="1%" style="height:5px"></td>
+          <td width="${m.odds.awayWin}%" style="height:5px;background:${m.odds.awayWin > m.odds.homeWin ? "#0E7A4F" : "#C4CDCA"};border-radius:3px"></td>
+        </tr></table>
         ${m.analysis?.fa ? `<div style="margin-top:8px;font-size:12px;color:#4A5A52;line-height:1.6;font-style:italic">"${m.analysis.fa}"</div>` : ""}
       </div>` : "";
 
     return `
     <div style="background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-size:11px;font-weight:700;color:#0E7A4F">${fmtTime(m.kickoff_utc)}</span>
-        <span style="font-size:11px;font-weight:700;color:#6B7A70">${fmtStage(m.stage, m.group_name).toUpperCase()}</span>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px"><tr>
+        <td align="right" style="font-size:11px;font-weight:700;color:#0E7A4F">${fmtTime(m.kickoff_utc)}</td>
+        <td align="left" style="font-size:11px;font-weight:700;color:#6B7A70">${fmtStage(m.stage, m.group_name).toUpperCase()}</td>
+      </tr></table>
       <div style="font-size:16px;font-weight:700;color:#14201A;text-align:center">${m.team_a} مقابل ${m.team_b}</div>
       ${oddsFA}
     </div>`;
