@@ -91,6 +91,7 @@ export default function MatchCard({
   const router = useRouter();
   const [selected, setSelected] = useState<Pick | null>(myPick);
   const [busy, setBusy] = useState(false);
+  const [showPicks, setShowPicks] = useState(false);
 
   const finished = match.status === "FINISHED" && match.result && match.result !== "VOID";
   const voided = match.result === "VOID" || match.status === "CANCELLED";
@@ -152,20 +153,28 @@ export default function MatchCard({
           </span>
         </div>
         {sub && <span className="text-xs text-muted">{sub}</span>}
-        <div className="mt-2 flex flex-wrap gap-1">
-          {names.length === 0 ? (
-            <span className="text-xs text-muted/70">—</span>
-          ) : (
-            names.map((n) => (
-              <span
-                key={n}
-                className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/70"
-              >
-                {emojiFor(n)} {n}
-              </span>
-            ))
-          )}
-        </div>
+        {showPicks ? (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {names.length === 0 ? (
+              <span className="text-xs text-muted/70">—</span>
+            ) : (
+              names.map((n) => (
+                <span
+                  key={n}
+                  className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/70"
+                >
+                  {emojiFor(n)} {n}
+                </span>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="mt-2 text-xs font-medium text-muted">
+            {names.length > 0
+              ? lang === "fa" ? `${names.length} نفر` : `${names.length} pick${names.length !== 1 ? "s" : ""}`
+              : "—"}
+          </div>
+        )}
       </button>
     );
   };
@@ -251,7 +260,15 @@ export default function MatchCard({
         <p className="mt-2 text-xs text-muted">{labels.knockoutNote}</p>
       )}
 
-      <p className="mt-2 text-xs font-medium text-muted">{labels.everyonesPicks}</p>
+      {picks.length > 0 && (
+        <button
+          onClick={() => setShowPicks((v) => !v)}
+          className="mt-2 flex w-full items-center justify-center gap-1 text-xs font-medium text-muted transition-colors hover:text-ink"
+        >
+          <span>{showPicks ? (lang === "fa" ? "بستن" : "Hide picks") : (lang === "fa" ? "نمایش پیش‌بینی‌ها" : "Show picks")}</span>
+          <span className={`inline-block transition-transform ${showPicks ? "rotate-180" : ""}`}>▾</span>
+        </button>
+      )}
     </div>
   );
 }
