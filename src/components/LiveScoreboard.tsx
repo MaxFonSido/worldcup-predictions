@@ -131,30 +131,30 @@ export default function LiveScoreboard() {
               </div>
 
               {/* Teams + Score */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 {/* Home */}
-                <div className="flex w-24 flex-col items-center gap-2">
+                <div className="flex w-20 shrink-0 flex-col items-center gap-2">
                   {m.homeLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={m.homeLogo}
                       alt=""
-                      className="h-14 w-14 object-contain"
+                      className="h-12 w-12 object-contain sm:h-14 sm:w-14"
                     />
                   ) : (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/10 text-lg font-bold text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-white sm:h-14 sm:w-14 sm:text-lg">
                       {m.homeCode}
                     </div>
                   )}
-                  <span className="text-center text-sm font-semibold text-white">
+                  <span className="text-center text-xs font-semibold text-white sm:text-sm">
                     {m.homeTeam}
                   </span>
                 </div>
 
                 {/* Score */}
-                <div className="text-center">
-                  <div className="text-5xl font-extrabold tabular-nums text-white">
-                    {m.homeScore} – {m.awayScore}
+                <div className="min-w-0 flex-1 text-center">
+                  <div className="whitespace-nowrap text-4xl font-extrabold tabular-nums text-white sm:text-5xl">
+                    {m.homeScore}&nbsp;–&nbsp;{m.awayScore}
                   </div>
                   <div className="mt-1 text-xs font-medium text-white/50">
                     {m.statusText}
@@ -162,20 +162,20 @@ export default function LiveScoreboard() {
                 </div>
 
                 {/* Away */}
-                <div className="flex w-24 flex-col items-center gap-2">
+                <div className="flex w-20 shrink-0 flex-col items-center gap-2">
                   {m.awayLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={m.awayLogo}
                       alt=""
-                      className="h-14 w-14 object-contain"
+                      className="h-12 w-12 object-contain sm:h-14 sm:w-14"
                     />
                   ) : (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/10 text-lg font-bold text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-white sm:h-14 sm:w-14 sm:text-lg">
                       {m.awayCode}
                     </div>
                   )}
-                  <span className="text-center text-sm font-semibold text-white">
+                  <span className="text-center text-xs font-semibold text-white sm:text-sm">
                     {m.awayTeam}
                   </span>
                 </div>
