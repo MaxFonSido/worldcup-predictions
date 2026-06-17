@@ -16,7 +16,7 @@ export default async function Nav({
   lang: Lang;
   displayName: string;
   userId: string;
-  active: "matches" | "results" | "leaderboard" | "champion" | "chat" | "pool" | "admin" | "news" | "standings";
+  active: "matches" | "results" | "leaderboard" | "champion" | "chat" | "pool" | "admin" | "standings";
 }) {
   const tr = t(lang);
   const tab = (on: boolean) =>
@@ -52,9 +52,6 @@ export default async function Nav({
               </Link>
               <Link href="/standings" className={tab(active === "standings")}>
                 {tr.standingsTab}
-              </Link>
-              <Link href="/news" className={tab(active === "news")}>
-                {tr.newsTab}
               </Link>
               <Link href="/leaderboard" className={tab(active === "leaderboard")}>
                 {tr.leaderboard}

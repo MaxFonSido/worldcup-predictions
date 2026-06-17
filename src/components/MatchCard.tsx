@@ -80,13 +80,15 @@ export default function MatchCard({
   myPick,
   picks,
   lang,
-  labels
+  labels,
+  showOtherPicks = true
 }: {
   match: MatchView;
   myPick: Pick | null;
   picks: { name: string; pick: Pick }[];
   lang: "en" | "fa";
   labels: Labels;
+  showOtherPicks?: boolean;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Pick | null>(myPick);
@@ -148,12 +150,12 @@ export default function MatchCard({
         <div className="flex items-center justify-between gap-1">
           <span className="font-semibold leading-tight">{title}</span>
           <span className="flex shrink-0 items-center gap-1">
-            {total > 0 && <span className="tnum text-xs text-muted">{pct}%</span>}
+            {showOtherPicks && total > 0 && <span className="tnum text-xs text-muted">{pct}%</span>}
             {isWinner && <span className="text-gold">★</span>}
           </span>
         </div>
         {sub && <span className="text-xs text-muted">{sub}</span>}
-        {showPicks ? (
+        {showOtherPicks && (showPicks ? (
           <div className="mt-2 flex flex-wrap gap-1">
             {names.length === 0 ? (
               <span className="text-xs text-muted/70">—</span>
@@ -174,7 +176,7 @@ export default function MatchCard({
               ? lang === "fa" ? `${names.length} نفر` : `${names.length} pick${names.length !== 1 ? "s" : ""}`
               : "—"}
           </div>
-        )}
+        ))}
       </button>
     );
   };
@@ -260,7 +262,7 @@ export default function MatchCard({
         <p className="mt-2 text-xs text-muted">{labels.knockoutNote}</p>
       )}
 
-      {picks.length > 0 && (
+      {showOtherPicks && picks.length > 0 && (
         <button
           onClick={() => setShowPicks((v) => !v)}
           className="mt-2 flex w-full items-center justify-center gap-1 text-xs font-medium text-muted transition-colors hover:text-ink"

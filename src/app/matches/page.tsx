@@ -162,6 +162,7 @@ export default async function MatchesPage() {
                     picks={votersByMatch.get(m.id) ?? []}
                     lang={lang}
                     labels={labels}
+                    showOtherPicks={false}
                   />
                 );
               })}
