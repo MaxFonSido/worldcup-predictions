@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       dir={dir(lang)}
       className={`${vazir.variable}${dark ? " dark" : ""}`}
     >
-      <body className="font-sans">{children}</body>
+      <body className="font-sans has-bottom-nav">{children}</body>
     </html>
   );
 }

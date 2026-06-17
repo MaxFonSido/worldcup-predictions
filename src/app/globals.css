@@ -147,6 +147,14 @@ input:focus-visible {
 }
 
 /* ---- "Buzz" gossip tag (used in the News feed; works in both themes) ---- */
+
+/* ---- Bottom tab bar spacing ---- */
+/* Ensure page content doesn't hide behind the fixed bottom nav.
+   The bar is ~56px + env(safe-area-inset-bottom) on notched phones. */
+.has-bottom-nav {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+}
+
 .buzz-tag {
   display: inline-flex;
   align-items: center;
@@ -161,30 +169,4 @@ input:focus-visible {
 .dark .buzz-tag {
   background: #3a1620;
   color: #fda4af;
-}
-
-/* ---- Emoji burst particles ---- */
-.emoji-burst-particle {
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  animation: emoji-fly 1.6s ease-out both;
-}
-
-@keyframes emoji-fly {
-  0% {
-    transform: translate(0, 0) scale(0) rotate(0deg);
-    opacity: 1;
-  }
-  20% {
-    transform: translate(calc(var(--tx) * 0.2), calc(var(--ty) * 0.2)) scale(1.3) rotate(60deg);
-    opacity: 1;
-  }
-  70% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate(var(--tx), var(--ty)) scale(0.4) rotate(180deg);
-    opacity: 0;
-  }
 }

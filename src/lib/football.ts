@@ -25,14 +25,6 @@ function resultFromApi(m: ApiMatch): string | null {
     if (m.score.winner === "HOME_TEAM") return "TEAM_A";
     if (m.score.winner === "AWAY_TEAM") return "TEAM_B";
     if (m.score.winner === "DRAW") return "DRAW";
-    // Fallback: derive from scores if winner field is missing
-    const h = m.score?.fullTime?.home;
-    const a = m.score?.fullTime?.away;
-    if (h != null && a != null) {
-      if (h > a) return "TEAM_A";
-      if (a > h) return "TEAM_B";
-      return "DRAW";
-    }
     return null;
   }
   if (m.status === "CANCELLED") return "VOID";
