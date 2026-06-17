@@ -41,28 +41,30 @@ export default async function Nav({
 
   return (
     <>
-      {/* Slim top header */}
-      <header className="pitch-stripes text-white">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">⚽️</span>
-            <span className="font-bold">{tr.appName}</span>
+      {/* Sticky top bar: header + announcements */}
+      <div className="sticky top-0 z-30">
+        <header className="pitch-stripes text-white">
+          <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⚽️</span>
+              <span className="font-bold">{tr.appName}</span>
+            </div>
+            <LangToggle current={lang} />
           </div>
-          <LangToggle current={lang} />
-        </div>
-      </header>
+        </header>
 
-      {/* Announcement banners (champion pick, pool, etc.) */}
-      <AnnouncementStrip
-        page={active}
-        labels={{
-          poolOpen: tr.stripPoolOpen,
-          poolCta: tr.poolJoinShort,
-          championOpen: tr.stripChampionOpen,
-          championCta: tr.stripChampionCta,
-          closesIn: tr.poolClosesIn
-        }}
-      />
+        {/* Announcement banners (champion pick, pool, etc.) */}
+        <AnnouncementStrip
+          page={active}
+          labels={{
+            poolOpen: tr.stripPoolOpen,
+            poolCta: tr.poolJoinShort,
+            championOpen: tr.stripChampionOpen,
+            championCta: tr.stripChampionCta,
+            closesIn: tr.poolClosesIn
+          }}
+        />
+      </div>
 
       {/* Bottom tab bar + More sheet */}
       <BottomNav
