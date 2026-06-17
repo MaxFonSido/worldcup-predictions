@@ -15,7 +15,7 @@ export default async function Nav({
   lang: Lang;
   displayName: string;
   userId: string;
-  active: "matches" | "results" | "leaderboard" | "champion" | "chat" | "pool" | "admin" | "standings" | "account";
+  active: "matches" | "results" | "leaderboard" | "champion" | "chat" | "pool" | "admin" | "standings" | "account" | "brief";
 }) {
   const tr = t(lang);
 
@@ -35,6 +35,7 @@ export default async function Nav({
     prize: tr.prizeTab,
     admin: tr.adminTab,
     account: tr.accountTab,
+    brief: tr.briefTab,
     more: tr.moreTab,
     logout: tr.logout,
     hi: tr.hi,

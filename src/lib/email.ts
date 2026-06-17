@@ -359,6 +359,43 @@ async function getSubscribers(): Promise<{ id: string; email: string }[]> {
     .map((u) => ({ id: u.id as string, email: u.email as string }));
 }
 
+// ─── Build structured digest content for in-app Morning Brief ─
+export type DigestMatch = {
+  team_a: string;
+  team_b: string;
+  kickoff_utc: string;
+  stage: string;
+  group_name: string | null;
+  venue: string | null;
+  weather: { city: string; temp: number; icon: string } | null;
+  odds: { homeWin: number; draw: number; awayWin: number } | null;
+  analysis: { en: string } | null;
+};
+
+export type DigestContent = {
+  date: string;
+  matches: DigestMatch[];
+  family: FamilyHighlights;
+};
+
+function buildDigestContent(enriched: EnrichedMatch[], family: FamilyHighlights): DigestContent {
+  return {
+    date: enriched.length ? fmtDate(enriched[0].kickoff_utc) : "Today",
+    matches: enriched.map((m) => ({
+      team_a: m.team_a,
+      team_b: m.team_b,
+      kickoff_utc: m.kickoff_utc,
+      stage: m.stage,
+      group_name: m.group_name,
+      venue: m.venue,
+      weather: m.weather,
+      odds: m.odds,
+      analysis: m.analysis ? { en: m.analysis.en } : null,
+    })),
+    family,
+  };
+}
+
 // ─── Send morning digest ──────────────────────────────────────
 export async function sendMorningDigest(adminOnly?: string): Promise<number> {
   const supabase = db();
@@ -392,6 +429,14 @@ export async function sendMorningDigest(adminOnly?: string): Promise<number> {
   const family = await getFamilyHighlights(supabase).catch(() => ({
     bestPredictor: null, biggestUpset: null, hottestStreak: null, topThree: []
   }));
+
+  // Save digest to DB for the Morning Brief in-app page
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: TZ }); // "2026-06-17"
+  const digestContent = buildDigestContent(enriched, family);
+  await supabase.from("daily_digest").upsert(
+    { date: today, content: JSON.stringify(digestContent), created_at: new Date().toISOString() },
+    { onConflict: "date" }
+  ).catch((e) => console.error("Failed to save digest to DB:", e));
 
   // If adminOnly is set, only send to that email
   const subs = adminOnly
