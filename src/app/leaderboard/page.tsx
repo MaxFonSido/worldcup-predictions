@@ -18,12 +18,13 @@ export default async function LeaderboardPage() {
   const [{ data: board }, { data: users }, { data: matches }, { data: myPreds }] =
     await Promise.all([
       supabase.from("leaderboard").select("id, display_name, golden_tokens"),
-      supabase.from("users").select("id, champion_pick"),
+      supabase.from("users").select("id, champion_pick, avatar_emoji"),
       supabase.from("matches").select("id, stage, team_a, team_b, result, status, kickoff_utc"),
       supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
     ]);
 
   const allMatches = matches ?? [];
+  const emojiById = new Map((users ?? []).map((u) => [u.id, u.avatar_emoji as string | null]));
 
   // The champion = winner of the finished final (null until it's played).
   let champion: string | null = null;
@@ -43,7 +44,8 @@ export default async function LeaderboardPage() {
       name: r.display_name as string,
       golden: (r.golden_tokens as number) ?? 0,
       champPick,
-      diamond
+      diamond,
+      emoji: emojiById.get(r.id as string) ?? null
     };
   });
 
@@ -143,7 +145,7 @@ export default async function LeaderboardPage() {
                     </span>
                     <div>
                       <span className="font-semibold">
-                        {emojiFor(r.name)} {r.name}
+                        {emojiFor(r.name, r.emoji)} {r.name}
                         {isMe && <span className="ms-2 text-xs font-normal text-pitch">({tr.you})</span>}
                       </span>
                       {r.champPick && <div className="text-xs text-muted">🏆 {r.champPick}</div>}

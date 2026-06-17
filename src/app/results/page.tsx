@@ -23,10 +23,14 @@ export default async function ResultsPage() {
   const [{ data: matches }, { data: allPicks }, { data: users }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: false }),
     supabase.from("predictions").select("match_id, user_id, pick"),
-    supabase.from("users").select("id, display_name")
+    supabase.from("users").select("id, display_name, avatar_emoji")
   ]);
 
   const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));
+  const emojiMap: Record<string, string> = {};
+  for (const u of users ?? []) {
+    if (u.avatar_emoji) emojiMap[u.display_name as string] = u.avatar_emoji;
+  }
 
   const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
   const myPickByMatch = new Map<string, Pick>();
@@ -101,6 +105,7 @@ export default async function ResultsPage() {
                 picks={votersByMatch.get(m.id) ?? []}
                 lang={lang}
                 labels={labels}
+                emojiMap={emojiMap}
               />
             );
           })}

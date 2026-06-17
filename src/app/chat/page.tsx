@@ -18,10 +18,14 @@ export default async function ChatPage() {
 
   const [{ data: msgs }, { data: users }, { data: reactions }] = await Promise.all([
     supabase.from("messages").select("id, user_id, body, created_at").order("created_at", { ascending: true }).limit(200),
-    supabase.from("users").select("id, display_name"),
+    supabase.from("users").select("id, display_name, avatar_emoji"),
     supabase.from("reactions").select("message_id, user_id, emoji")
   ]);
   const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));
+  const emojiMap: Record<string, string> = {};
+  for (const u of users ?? []) {
+    if (u.avatar_emoji) emojiMap[u.display_name as string] = u.avatar_emoji as string;
+  }
 
   // Group reactions by message_id
   const rxnMap = new Map<string, { emoji: string; user_id: string; name: string }[]>();
@@ -56,6 +60,7 @@ export default async function ChatPage() {
           myUserId={session.userId}
           lang={lang}
           initial={initial}
+          emojiMap={emojiMap}
           labels={{ placeholder: tr.chatPlaceholder, send: tr.chatSend, empty: tr.chatEmpty, react: tr.chatReact }}
         />
       </main>

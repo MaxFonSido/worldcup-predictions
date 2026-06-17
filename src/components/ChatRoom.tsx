@@ -32,12 +32,14 @@ export default function ChatRoom({
   myUserId,
   lang,
   labels,
-  initial
+  initial,
+  emojiMap
 }: {
   myUserId: string;
   lang: "en" | "fa";
   labels: Labels;
   initial: Msg[];
+  emojiMap?: Record<string, string>;
 }) {
   const [messages, setMessages] = useState<Msg[]>(initial);
   const [text, setText] = useState("");
@@ -140,7 +142,7 @@ export default function ChatRoom({
                 <div className={`max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
                   {!mine && (
                     <div className="mb-0.5 ms-1 text-xs font-semibold text-muted">
-                      {emojiFor(m.name)} {m.name}
+                      {emojiFor(m.name, emojiMap?.[m.name])} {m.name}
                     </div>
                   )}
                   <div

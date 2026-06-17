@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-type Tab = "matches" | "results" | "leaderboard" | "standings" | "champion" | "chat" | "pool" | "admin";
+type Tab = "matches" | "results" | "leaderboard" | "standings" | "champion" | "chat" | "pool" | "admin" | "account";
 
 type Labels = {
   matches: string;
@@ -14,6 +14,7 @@ type Labels = {
   chat: string;
   prize: string;
   admin: string;
+  account: string;
   more: string;
   logout: string;
   hi: string;
@@ -30,6 +31,7 @@ const MORE_TABS: { key: Tab | "logout"; icon: string; labelKey: keyof Labels; da
   { key: "champion", icon: "🏆", labelKey: "champion" },
   { key: "chat", icon: "💬", labelKey: "chat" },
   { key: "pool", icon: "🎁", labelKey: "prize" },
+  { key: "account", icon: "👤", labelKey: "account" },
   { key: "admin", icon: "⚙️", labelKey: "admin" },
   { key: "logout", icon: "🚪", labelKey: "logout", danger: true },
 ];
@@ -43,6 +45,7 @@ const TAB_ROUTES: Record<string, string> = {
   chat: "/chat",
   pool: "/pool",
   admin: "/admin",
+  account: "/account",
 };
 
 const ROUTE_TO_TAB: Record<string, Tab> = {
@@ -54,6 +57,7 @@ const ROUTE_TO_TAB: Record<string, Tab> = {
   "/chat": "chat",
   "/pool": "pool",
   "/admin": "admin",
+  "/account": "account",
 };
 
 export default function BottomNav({

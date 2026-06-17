@@ -81,7 +81,10 @@ export default function MatchCard({
   picks,
   lang,
   labels,
-  showOtherPicks = true
+  showOtherPicks = true,
+  myName,
+  myEmoji,
+  emojiMap
 }: {
   match: MatchView;
   myPick: Pick | null;
@@ -89,6 +92,9 @@ export default function MatchCard({
   lang: "en" | "fa";
   labels: Labels;
   showOtherPicks?: boolean;
+  myName?: string;
+  myEmoji?: string | null;
+  emojiMap?: Record<string, string>;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Pick | null>(myPick);
@@ -165,7 +171,7 @@ export default function MatchCard({
                   key={n}
                   className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/70"
                 >
-                  {emojiFor(n)} {n}
+                  {emojiFor(n, emojiMap?.[n])} {n}
                 </span>
               ))
             )}
@@ -177,6 +183,13 @@ export default function MatchCard({
               : "—"}
           </div>
         ))}
+        {!showOtherPicks && isMine && myName && (
+          <div className="mt-2">
+            <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/70">
+              {emojiFor(myName, myEmoji)} {myName}
+            </span>
+          </div>
+        )}
       </button>
     );
   };

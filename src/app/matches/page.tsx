@@ -4,7 +4,6 @@ import { getLang, t } from "@/lib/i18n";
 import { db, TOTAL_MATCHES } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
 import Nav from "@/components/Nav";
-import SubscribeBanner from "@/components/SubscribeBanner";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import DayAccordion from "@/components/DayAccordion";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
@@ -27,10 +26,10 @@ export default async function MatchesPage() {
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: true }),
     supabase.from("predictions").select("match_id, user_id, pick"),
     supabase.from("users").select("id, display_name"),
-    supabase.from("users").select("email").eq("id", session.userId).maybeSingle()
+    supabase.from("users").select("avatar_emoji").eq("id", session.userId).maybeSingle()
   ]);
 
-  const isSubscribed = !!(me?.email);
+  const myEmoji = me?.avatar_emoji ?? null;
 
   const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));
 
@@ -114,7 +113,6 @@ export default async function MatchesPage() {
     <>
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="matches" />
       <LiveScoreboard />
-      <SubscribeBanner subscribed={isSubscribed} />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
         <div className="mb-5 flex items-center justify-between rounded-2xl bg-pitch-deep px-5 py-4 text-white">
@@ -163,6 +161,8 @@ export default async function MatchesPage() {
                     lang={lang}
                     labels={labels}
                     showOtherPicks={false}
+                    myName={session.displayName}
+                    myEmoji={myEmoji}
                   />
                 );
               })}
