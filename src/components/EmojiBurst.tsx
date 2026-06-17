@@ -11,7 +11,7 @@ const EMOJI_SETS = [
   ["⚽", "🏆", "🥇", "🎯", "🔥", "💪"],
 ];
 
-type Particle = { id: number; emoji: string; x: number; y: number; angle: number; distance: number };
+type Particle = { id: number; emoji: string; x: number; y: number; angle: number; distance: number; size: number; delay: number };
 
 let nextId = 0;
 
@@ -23,20 +23,23 @@ export default function EmojiBurst() {
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     const set = EMOJI_SETS[Math.floor(Math.random() * EMOJI_SETS.length)];
+    const maxDim = Math.max(window.innerWidth, window.innerHeight);
 
-    const newParticles: Particle[] = Array.from({ length: 24 }, () => ({
+    const newParticles: Particle[] = Array.from({ length: 50 }, () => ({
       id: nextId++,
       emoji: set[Math.floor(Math.random() * set.length)],
       x: cx,
       y: cy,
       angle: Math.random() * 360,
-      distance: 60 + Math.random() * 120,
+      distance: maxDim * 0.3 + Math.random() * maxDim * 0.6,
+      size: 1.2 + Math.random() * 1.8,
+      delay: Math.random() * 150,
     }));
 
     setParticles((prev) => [...prev, ...newParticles]);
     setTimeout(() => {
       setParticles((prev) => prev.filter((p) => !newParticles.includes(p)));
-    }, 1200);
+    }, 2000);
   }, []);
 
   return (
@@ -60,6 +63,8 @@ export default function EmojiBurst() {
             style={{
               left: p.x,
               top: p.y,
+              fontSize: `${p.size}rem`,
+              animationDelay: `${p.delay}ms`,
               // @ts-expect-error CSS custom properties
               "--tx": `${tx}px`,
               "--ty": `${ty}px`,
