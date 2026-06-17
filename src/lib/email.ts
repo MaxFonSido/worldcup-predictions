@@ -433,10 +433,14 @@ export async function sendMorningDigest(adminOnly?: string): Promise<number> {
   // Save digest to DB for the Morning Brief in-app page
   const today = new Date().toLocaleDateString("en-CA", { timeZone: TZ }); // "2026-06-17"
   const digestContent = buildDigestContent(enriched, family);
-  await supabase.from("daily_digest").upsert(
-    { date: today, content: JSON.stringify(digestContent), created_at: new Date().toISOString() },
-    { onConflict: "date" }
-  ).catch((e) => console.error("Failed to save digest to DB:", e));
+  try {
+    await supabase.from("daily_digest").upsert(
+      { date: today, content: JSON.stringify(digestContent), created_at: new Date().toISOString() },
+      { onConflict: "date" }
+    );
+  } catch (e) {
+    console.error("Failed to save digest to DB:", e);
+  }
 
   // If adminOnly is set, only send to that email
   const subs = adminOnly
