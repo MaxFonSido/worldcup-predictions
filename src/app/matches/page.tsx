@@ -8,6 +8,7 @@ import SubscribeBanner from "@/components/SubscribeBanner";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import DayAccordion from "@/components/DayAccordion";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
+import EmojiBurst from "@/components/EmojiBurst";
 
 export const dynamic = "force-dynamic";
 
@@ -170,6 +171,7 @@ export default async function MatchesPage() {
           ))}
         </div>
       </main>
+      <EmojiBurst />
     </>
   );
 }
