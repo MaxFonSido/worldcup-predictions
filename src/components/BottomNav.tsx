@@ -117,7 +117,7 @@ export default function BottomNav({
   return (
     <>
       {/* Bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] dark:bg-[#11201a]">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[#f5f5f0] shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] dark:bg-[#0d1a15] dark:shadow-[0_-4px_12px_rgba(0,0,0,0.3)]">
         <div className="mx-auto flex max-w-2xl">
           {BAR_TABS.map((tab) => {
             const on = currentTab === tab.key;
