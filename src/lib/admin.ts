@@ -17,3 +17,9 @@ export async function isRegistrationOpen(supabase: SupabaseClient): Promise<bool
   const { data } = await supabase.from("app_meta").select("value").eq("key", "registration_open").maybeSingle();
   return (data?.value ?? "true") !== "false"; // default: open
 }
+
+// Khal Bala banner visibility — only admin sees it until toggled on
+export async function isKhalBalaVisible(supabase: SupabaseClient): Promise<boolean> {
+  const { data } = await supabase.from("app_meta").select("value").eq("key", "khalbala_visible").maybeSingle();
+  return data?.value === "true"; // default: hidden
+}

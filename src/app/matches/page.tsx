@@ -3,10 +3,12 @@ import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db, TOTAL_MATCHES } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
+import { isAdmin, isKhalBalaVisible } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import DayAccordion from "@/components/DayAccordion";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
+import KhalBalaBanner from "@/components/KhalBalaBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,12 @@ export default async function MatchesPage() {
     supabase.from("users").select("id, display_name"),
     supabase.from("users").select("avatar_emoji").eq("id", session.userId).maybeSingle()
   ]);
+
+  const [admin, khalBalaVisible] = await Promise.all([
+    isAdmin(supabase, session.displayName),
+    isKhalBalaVisible(supabase),
+  ]);
+  const showKhalBala = admin || khalBalaVisible;
 
   const myEmoji = me?.avatar_emoji ?? null;
 
@@ -115,6 +123,8 @@ export default async function MatchesPage() {
       <LiveScoreboard />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
+        {showKhalBala && <KhalBalaBanner />}
+
         <div className="mb-5 flex items-center justify-between rounded-2xl bg-pitch-deep px-5 py-4 text-white">
           <span className="text-sm opacity-90">{tr.picksLeft}</span>
           <span className="tnum text-2xl font-bold">

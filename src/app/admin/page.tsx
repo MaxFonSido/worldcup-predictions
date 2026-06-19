@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
-import { isAdmin, isRegistrationOpen } from "@/lib/admin";
+import { isAdmin, isRegistrationOpen, isKhalBalaVisible } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import AdminPinReset from "@/components/AdminPinReset";
 import AdminRegistrationToggle from "@/components/AdminRegistrationToggle";
 import AdminSendDigest from "@/components/AdminSendDigest";
+import AdminKhalBalaToggle from "@/components/AdminKhalBalaToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function AdminPage() {
   const tr = t(lang);
 
   const regOpen = await isRegistrationOpen(supabase);
+  const khalBalaVisible = await isKhalBalaVisible(supabase);
 
   const { data: users } = await supabase
     .from("users")
@@ -59,6 +61,12 @@ export default async function AdminPage() {
 
         <section className="mt-6">
           <AdminSendDigest />
+        </section>
+
+        <section className="mt-6">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">Khal Bala خال بالا</h2>
+          <p className="mb-3 mt-1 text-sm text-muted">Show or hide the Khal Bala banner for everyone</p>
+          <AdminKhalBalaToggle visible={khalBalaVisible} />
         </section>
       </main>
     </>
