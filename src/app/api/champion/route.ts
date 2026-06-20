@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { getParticipants, getChampionLock } from "@/lib/champion";
+import { getParticipants } from "@/lib/champion";
+import { isChampionPickingEnabled } from "@/lib/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,9 +16,9 @@ export async function POST(req: Request) {
 
   const supabase = db();
 
-  // Champion picks lock at kickoff — unless the organizer has reopened them.
-  const lock = await getChampionLock(supabase);
-  if (!lock.open) {
+  // Champion picking is fully controlled by the organizer's manual switch.
+  const open = await isChampionPickingEnabled(supabase);
+  if (!open) {
     return NextResponse.json({ error: "locked" }, { status: 403 });
   }
 

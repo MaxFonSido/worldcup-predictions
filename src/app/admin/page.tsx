@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
-import { isAdmin, isRegistrationOpen, isKhalBalaVisible } from "@/lib/admin";
+import { isAdmin, isRegistrationOpen, isKhalBalaVisible, isChampionPickingEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import AdminPinReset from "@/components/AdminPinReset";
 import AdminRegistrationToggle from "@/components/AdminRegistrationToggle";
 import AdminSendDigest from "@/components/AdminSendDigest";
 import AdminKhalBalaToggle from "@/components/AdminKhalBalaToggle";
+import AdminChampionToggle from "@/components/AdminChampionToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export default async function AdminPage() {
 
   const regOpen = await isRegistrationOpen(supabase);
   const khalBalaVisible = await isKhalBalaVisible(supabase);
+  const championOpen = await isChampionPickingEnabled(supabase);
 
   const { data: users } = await supabase
     .from("users")
@@ -61,6 +63,12 @@ export default async function AdminPage() {
 
         <section className="mt-6">
           <AdminSendDigest />
+        </section>
+
+        <section className="mt-6">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">Champion Picking 🏆</h2>
+          <p className="mb-3 mt-1 text-sm text-muted">Show or hide the champion-picking banner for everyone</p>
+          <AdminChampionToggle enabled={championOpen} />
         </section>
 
         <section className="mt-6">

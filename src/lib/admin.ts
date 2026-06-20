@@ -23,3 +23,10 @@ export async function isKhalBalaVisible(supabase: SupabaseClient): Promise<boole
   const { data } = await supabase.from("app_meta").select("value").eq("key", "khalbala_visible").maybeSingle();
   return data?.value === "true"; // default: hidden
 }
+
+// Champion picking — fully manual switch, set by the organizer. Replaces the old
+// kickoff-based auto-lock for this feature. Default: closed, until toggled on.
+export async function isChampionPickingEnabled(supabase: SupabaseClient): Promise<boolean> {
+  const { data } = await supabase.from("app_meta").select("value").eq("key", "champion_picking_enabled").maybeSingle();
+  return data?.value === "true"; // default: closed
+}

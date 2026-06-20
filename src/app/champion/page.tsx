@@ -3,7 +3,8 @@ import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
-import { getParticipants, titlesFor, getChampionLock } from "@/lib/champion";
+import { getParticipants, titlesFor } from "@/lib/champion";
+import { isChampionPickingEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import ChampionForm from "@/components/ChampionForm";
 import { emojiFor } from "@/lib/avatar";
@@ -20,15 +21,15 @@ export default async function ChampionPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [participants, lock, { data: users }] = await Promise.all([
+  const [participants, championOpen, { data: users }] = await Promise.all([
     getParticipants(supabase),
-    getChampionLock(supabase),
+    isChampionPickingEnabled(supabase),
     supabase.from("users").select("id, display_name, champion_pick")
   ]);
 
   const options = participants.map((c) => ({ name: c, titles: titlesFor(c) }));
 
-  const locked = !lock.open;
+  const locked = !championOpen;
 
   const me = (users ?? []).find((u) => u.id === session.userId);
   const myPick = (me?.champion_pick as string | null) ?? null;
@@ -56,7 +57,7 @@ export default async function ChampionPage() {
             save: tr.championSave,
             saved: tr.championSaved,
             titlesWord: tr.championTitles,
-            lockNote: lock.reopened ? tr.championReopenNote : tr.championLockNote,
+            lockNote: tr.championLockNote,
             lockedMsg: tr.championLocked
           }}
         />
