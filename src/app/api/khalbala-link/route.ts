@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { db } from "@/lib/db";
 import { SignJWT } from "jose";
 
 export async function GET() {
@@ -14,10 +15,20 @@ export async function GET() {
     return NextResponse.json({ error: "Khal Bala not configured" }, { status: 500 });
   }
 
+  // Look up the user's avatar_emoji from the users table
+  const supabase = db();
+  const { data: me } = await supabase
+    .from("users")
+    .select("avatar_emoji")
+    .eq("id", session.userId)
+    .maybeSingle();
+
   const secret = new TextEncoder().encode(sharedSecret);
 
-  // Sign a short-lived token (5 minutes) with the user's display name
-  const token = await new SignJWT({ displayName: session.displayName })
+  const token = await new SignJWT({
+    displayName: session.displayName,
+    avatarEmoji: me?.avatar_emoji ?? null,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("5m")
