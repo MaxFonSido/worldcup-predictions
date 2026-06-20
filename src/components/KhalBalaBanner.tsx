@@ -24,7 +24,28 @@ export default function KhalBalaBanner() {
   }
 
   return (
-    <div className="relative mb-5 rounded-2xl bg-gradient-to-r from-purple-900 via-purple-800 to-purple-900 p-4 shadow-lg border border-purple-700/40 overflow-hidden">
+    <div className="kb-shake relative mb-5 rounded-2xl bg-gradient-to-r from-purple-900 via-purple-800 to-purple-900 p-4 shadow-lg border border-purple-700/40 overflow-hidden">
+      <style jsx>{`
+        @keyframes kb-shake {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          2% { transform: translateX(-3px) rotate(-1deg); }
+          4% { transform: translateX(3px) rotate(1deg); }
+          6% { transform: translateX(-3px) rotate(-1deg); }
+          8% { transform: translateX(3px) rotate(1deg); }
+          10% { transform: translateX(-2px) rotate(-0.5deg); }
+          12% { transform: translateX(2px) rotate(0.5deg); }
+          14% { transform: translateX(0) rotate(0deg); }
+        }
+        .kb-shake {
+          animation: kb-shake 1s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .kb-shake {
+            animation: none;
+          }
+        }
+      `}</style>
+
       {/* Dismiss button */}
       <button
         onClick={(e) => { e.stopPropagation(); setDismissed(true); }}
@@ -38,20 +59,11 @@ export default function KhalBalaBanner() {
       <button
         onClick={handleTap}
         disabled={loading}
-        className="w-full text-left"
+        className="w-full text-center py-1"
       >
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">🃏</span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-white text-sm">Khal Bala</span>
-              <span className="text-purple-300 text-sm" dir="rtl">خال بالا</span>
-            </div>
-            <p className="text-purple-200/80 text-xs mt-0.5">
-              {loading ? "Opening..." : "Knockout predictions — exact scores & multipliers →"}
-            </p>
-          </div>
-        </div>
+        <p dir="rtl" className="font-bold text-gold text-base leading-relaxed">
+          {loading ? "در حال باز شدن…" : "خال بالا - بیا قدرت پیشگویی تو امتحان کن"}
+        </p>
       </button>
     </div>
   );
