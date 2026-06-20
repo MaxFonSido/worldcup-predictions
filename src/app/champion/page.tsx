@@ -24,7 +24,7 @@ export default async function ChampionPage() {
   const [participants, championOpen, { data: users }] = await Promise.all([
     getParticipants(supabase),
     isChampionPickingEnabled(supabase),
-    supabase.from("users").select("id, display_name, champion_pick")
+    supabase.from("users").select("id, display_name, champion_pick, avatar_emoji")
   ]);
 
   const options = participants.map((c) => ({ name: c, titles: titlesFor(c) }));
@@ -37,7 +37,11 @@ export default async function ChampionPage() {
   // Everyone's picks — visible to all.
   const everyone = (users ?? [])
     .filter((u) => u.champion_pick)
-    .map((u) => ({ name: u.display_name as string, country: u.champion_pick as string }))
+    .map((u) => ({
+      name: u.display_name as string,
+      country: u.champion_pick as string,
+      emoji: (u.avatar_emoji as string | null) ?? null
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
@@ -76,7 +80,7 @@ export default async function ChampionPage() {
                 key={e.name}
                 className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-card"
               >
-                <span className="font-medium">{emojiFor(e.name)} {e.name}</span>
+                <span className="font-medium">{emojiFor(e.name, e.emoji)} {e.name}</span>
                 <span className="font-semibold text-pitch-deep">🏆 {e.country}</span>
               </div>
             ))}
