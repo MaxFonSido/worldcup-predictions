@@ -178,13 +178,15 @@ input:focus-visible {
   --flag-star: rgba(220, 226, 255, 0.30);
 }
 .flag-wave-svg {
-  position: absolute;
-  top: -6%;
-  right: -18%;
-  width: 92%;
+  position: fixed;
+  top: 60px;
+  right: -10%;
+  width: 85%;
+  max-width: 500px;
   height: auto;
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
+  opacity: 0.85;
 }
 
 .buzz-tag {
