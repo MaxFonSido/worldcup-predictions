@@ -155,6 +155,38 @@ input:focus-visible {
   padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
 }
 
+/* ============================================================
+   FLAG WAVE BACKGROUND
+   Manual on/off via the Admin toggle (no dates involved).
+   Wrap page content in .flag-wave-zone; FlagWaveBackground.tsx
+   renders absolutely inside it, behind everything else by default
+   stacking order — no z-index changes needed on existing cards.
+   ============================================================ */
+.flag-wave-zone {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  --flag-stripe-red: rgba(178, 34, 52, 0.16);
+  --flag-stripe-white: rgba(120, 110, 90, 0.05);
+  --flag-canton: rgba(60, 59, 110, 0.16);
+  --flag-star: rgba(60, 59, 110, 0.22);
+}
+.dark .flag-wave-zone {
+  --flag-stripe-red: rgba(255, 90, 100, 0.16);
+  --flag-stripe-white: rgba(255, 255, 255, 0.07);
+  --flag-canton: rgba(120, 140, 255, 0.16);
+  --flag-star: rgba(220, 226, 255, 0.30);
+}
+.flag-wave-svg {
+  position: absolute;
+  top: -6%;
+  right: -18%;
+  width: 92%;
+  height: auto;
+  pointer-events: none;
+  z-index: -1;
+}
+
 .buzz-tag {
   display: inline-flex;
   align-items: center;

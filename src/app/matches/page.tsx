@@ -3,13 +3,14 @@ import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db, TOTAL_MATCHES } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
-import { isAdmin, isKhalBalaVisible, isChampionPickingEnabled } from "@/lib/admin";
+import { isAdmin, isKhalBalaVisible, isChampionPickingEnabled, isFlagSeasonEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import DayAccordion from "@/components/DayAccordion";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
 import KhalBalaBanner from "@/components/KhalBalaBanner";
 import ChampionBanner from "@/components/ChampionBanner";
+import FlagWaveBackground from "@/components/FlagWaveBackground";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +33,11 @@ export default async function MatchesPage() {
     supabase.from("users").select("avatar_emoji").eq("id", session.userId).maybeSingle()
   ]);
 
-  const [admin, khalBalaVisible, championOpen] = await Promise.all([
+  const [admin, khalBalaVisible, championOpen, flagOn] = await Promise.all([
     isAdmin(supabase, session.displayName),
     isKhalBalaVisible(supabase),
     isChampionPickingEnabled(supabase),
+    isFlagSeasonEnabled(supabase),
   ]);
   const showKhalBala = admin || khalBalaVisible;
 
@@ -124,7 +126,8 @@ export default async function MatchesPage() {
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="matches" />
       <LiveScoreboard />
 
-      <main className="mx-auto max-w-2xl px-5 py-6">
+      <main className={`mx-auto max-w-2xl px-5 py-6${flagOn ? " flag-wave-zone" : ""}`}>
+        {flagOn && <FlagWaveBackground />}
         {championOpen && <ChampionBanner text={tr.championBannerText} />}
         {showKhalBala && <KhalBalaBanner />}
 

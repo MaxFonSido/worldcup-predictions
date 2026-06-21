@@ -3,7 +3,9 @@ import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { emojiFor } from "@/lib/avatar";
+import { isFlagSeasonEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
+import FlagWaveBackground from "@/components/FlagWaveBackground";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export default async function LeaderboardPage() {
   const lang = getLang();
   const tr = t(lang);
   const supabase = db();
+  const flagOn = await isFlagSeasonEnabled(supabase);
 
   const [{ data: board }, { data: users }, { data: matches }, { data: myPreds }] =
     await Promise.all([
@@ -83,7 +86,8 @@ export default async function LeaderboardPage() {
     <>
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="leaderboard" />
 
-      <main className="mx-auto max-w-2xl px-5 py-6">
+      <main className={`mx-auto max-w-2xl px-5 py-6${flagOn ? " flag-wave-zone" : ""}`}>
+        {flagOn && <FlagWaveBackground />}
         {/* Finale banner — only when the tournament is decided */}
         {tournamentOver && rows.length > 0 && (
           <div className="mb-6 rounded-2xl bg-gradient-to-br from-gold to-amber-500 p-6 text-center text-white shadow-card">

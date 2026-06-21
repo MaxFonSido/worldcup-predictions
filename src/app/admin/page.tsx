@@ -2,13 +2,14 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
-import { isAdmin, isRegistrationOpen, isKhalBalaVisible, isChampionPickingEnabled } from "@/lib/admin";
+import { isAdmin, isRegistrationOpen, isKhalBalaVisible, isChampionPickingEnabled, isFlagSeasonEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import AdminPinReset from "@/components/AdminPinReset";
 import AdminRegistrationToggle from "@/components/AdminRegistrationToggle";
 import AdminSendDigest from "@/components/AdminSendDigest";
 import AdminKhalBalaToggle from "@/components/AdminKhalBalaToggle";
 import AdminChampionToggle from "@/components/AdminChampionToggle";
+import AdminFlagToggle from "@/components/AdminFlagToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function AdminPage() {
   const regOpen = await isRegistrationOpen(supabase);
   const khalBalaVisible = await isKhalBalaVisible(supabase);
   const championOpen = await isChampionPickingEnabled(supabase);
+  const flagOn = await isFlagSeasonEnabled(supabase);
 
   const { data: users } = await supabase
     .from("users")
@@ -63,6 +65,12 @@ export default async function AdminPage() {
 
         <section className="mt-6">
           <AdminSendDigest />
+        </section>
+
+        <section className="mt-6">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">July 4th Flag Background 🇺🇸</h2>
+          <p className="mb-3 mt-1 text-sm text-muted">Show or hide the waving flag background on Matches, Results, Ranking & Standings</p>
+          <AdminFlagToggle enabled={flagOn} />
         </section>
 
         <section className="mt-6">
