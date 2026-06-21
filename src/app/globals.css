@@ -165,28 +165,20 @@ input:focus-visible {
 .flag-wave-zone {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
-  --flag-stripe-red: rgba(178, 34, 52, 0.16);
-  --flag-stripe-white: rgba(120, 110, 90, 0.05);
-  --flag-canton: rgba(60, 59, 110, 0.16);
-  --flag-star: rgba(60, 59, 110, 0.22);
 }
-.dark .flag-wave-zone {
-  --flag-stripe-red: rgba(255, 90, 100, 0.16);
-  --flag-stripe-white: rgba(255, 255, 255, 0.07);
-  --flag-canton: rgba(120, 140, 255, 0.16);
-  --flag-star: rgba(220, 226, 255, 0.30);
-}
-.flag-wave-svg {
+.flag-bg-img {
   position: fixed;
-  top: 60px;
-  right: -10%;
-  width: 85%;
-  max-width: 500px;
-  height: auto;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.85;
+  opacity: 0.10;
+}
+.dark .flag-bg-img {
+  opacity: 0.08;
 }
 
 .buzz-tag {
