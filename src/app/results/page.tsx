@@ -3,10 +3,8 @@ import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
-import { isFlagSeasonEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import MatchCard, { type MatchView } from "@/components/MatchCard";
-import FlagWaveBackground from "@/components/FlagWaveBackground";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +19,6 @@ export default async function ResultsPage() {
   const lang = getLang();
   const tr = t(lang);
   const supabase = db();
-  const flagOn = await isFlagSeasonEnabled(supabase);
 
   const [{ data: matches }, { data: allPicks }, { data: users }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: false }),
@@ -74,8 +71,7 @@ export default async function ResultsPage() {
     <>
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="results" />
 
-      <main className={`mx-auto max-w-2xl px-5 py-6${flagOn ? " flag-wave-zone" : ""}`}>
-        {flagOn && <FlagWaveBackground />}
+      <main className="mx-auto max-w-2xl px-5 py-6">
         <h1 className="mb-4 text-xl font-bold text-pitch-deep">{tr.results}</h1>
 
         {past.length === 0 && (

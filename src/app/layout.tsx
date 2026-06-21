@@ -3,6 +3,9 @@ import { Vazirmatn } from "next/font/google";
 import { headers } from "next/headers";
 import { getLang, dir } from "@/lib/i18n";
 import { isNight } from "@/lib/theme";
+import { db } from "@/lib/db";
+import { isFlagSeasonEnabled } from "@/lib/admin";
+import FlagWaveBackground from "@/components/FlagWaveBackground";
 import "./globals.css";
 
 // Vazirmatn covers both Persian and Latin scripts beautifully — one font, both languages.
@@ -23,7 +26,7 @@ export const viewport: Viewport = {
   initialScale: 1
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = getLang();
 
   // Approximate location from the request (set by the host) — no GPS permission needed.
@@ -37,13 +40,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     tz
   );
 
+  // Flag background — manual switch from Admin, applies to every page from here.
+  const flagOn = await isFlagSeasonEnabled(db());
+
   return (
     <html
       lang={lang}
       dir={dir(lang)}
       className={`${vazir.variable}${dark ? " dark" : ""}`}
     >
-      <body className="font-sans has-bottom-nav">{children}</body>
+      <body className="font-sans has-bottom-nav">
+        {flagOn && <FlagWaveBackground />}
+        {children}
+      </body>
     </html>
   );
 }

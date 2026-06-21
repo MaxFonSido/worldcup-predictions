@@ -4,10 +4,8 @@ import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
 import { getStandings } from "@/lib/standings";
-import { isFlagSeasonEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import StandingsView, { type StandingsLabels } from "@/components/StandingsView";
-import FlagWaveBackground from "@/components/FlagWaveBackground";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +18,6 @@ export default async function StandingsPage() {
   const lang = getLang();
   const tr = t(lang);
   const { groups, rounds, phase } = await getStandings(db());
-  const flagOn = await isFlagSeasonEnabled(db());
 
   const labels: StandingsLabels = {
     groupsTab: tr.standingsGroups,
@@ -48,8 +45,7 @@ export default async function StandingsPage() {
   return (
     <>
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="standings" />
-      <main className={`mx-auto max-w-2xl px-5 py-6${flagOn ? " flag-wave-zone" : ""}`}>
-        {flagOn && <FlagWaveBackground />}
+      <main className="mx-auto max-w-2xl px-5 py-6">
         <h1 className="mb-4 text-xl font-bold text-pitch-deep">{tr.standingsTitle}</h1>
         <StandingsView groups={groups} rounds={rounds} phase={phase} labels={labels} />
       </main>

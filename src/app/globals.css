@@ -156,16 +156,13 @@ input:focus-visible {
 }
 
 /* ============================================================
-   FLAG WAVE BACKGROUND
+   FLAG BACKGROUND
    Manual on/off via the Admin toggle (no dates involved).
-   Wrap page content in .flag-wave-zone; FlagWaveBackground.tsx
-   renders absolutely inside it, behind everything else by default
-   stacking order — no z-index changes needed on existing cards.
+   Rendered once in layout.tsx, so it applies to every page.
+   A fixed full-bleed image at low opacity, sitting behind all
+   content (z-index: 0, with cards/content rendering above it
+   in normal flow — no z-index changes needed anywhere else).
    ============================================================ */
-.flag-wave-zone {
-  position: relative;
-  isolation: isolate;
-}
 .flag-bg-img {
   position: fixed;
   top: 0;
@@ -175,10 +172,10 @@ input:focus-visible {
   object-fit: cover;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.10;
+  opacity: 0.18;
 }
 .dark .flag-bg-img {
-  opacity: 0.08;
+  opacity: 0.15;
 }
 
 .buzz-tag {

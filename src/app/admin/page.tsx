@@ -69,7 +69,7 @@ export default async function AdminPage() {
 
         <section className="mt-6">
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted">July 4th Flag Background 🇺🇸</h2>
-          <p className="mb-3 mt-1 text-sm text-muted">Show or hide the waving flag background on Matches, Results, Ranking & Standings</p>
+          <p className="mb-3 mt-1 text-sm text-muted">Show or hide the flag background across the entire app</p>
           <AdminFlagToggle enabled={flagOn} />
         </section>
 
