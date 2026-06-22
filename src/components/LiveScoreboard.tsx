@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 
+
 type LiveMatch = {
   id: string;
   homeTeam: string;
@@ -97,14 +98,53 @@ export default function LiveScoreboard() {
     }
   };
 
+  // Track which match IDs were live on the last poll
+  const prevLiveIds = useRef<Set<string>>(new Set());
+  // Track which finished match IDs we've already started a sync retry loop for
+  const triggeredIds = useRef<Set<string>>(new Set());
+
+  // Fire /api/espn-trigger immediately, then retry every 2 min for up to 10 min
+  const startSyncRetry = useCallback((matchId: string) => {
+    if (triggeredIds.current.has(matchId)) return;
+    triggeredIds.current.add(matchId);
+
+    let attempts = 0;
+    const MAX_ATTEMPTS = 5; // 5 × 2 min = 10 minutes max
+
+    const trigger = async () => {
+      try {
+        await fetch("/api/espn-trigger", { method: "POST", cache: "no-store" });
+      } catch { /* ignore */ }
+      attempts++;
+      if (attempts < MAX_ATTEMPTS) {
+        setTimeout(trigger, 2 * 60 * 1000); // retry in 2 minutes
+      }
+    };
+
+    trigger(); // fire immediately
+  }, []);
+
   const poll = useCallback(async () => {
     try {
       const res = await fetch("/api/livescores", { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
-      const live = (data.matches ?? []).filter(
-        (m: LiveMatch) => m.status === "in"
-      );
+      const allMatches: LiveMatch[] = data.matches ?? [];
+
+      const live = allMatches.filter((m) => m.status === "in");
+      const finished = allMatches.filter((m) => m.status === "post");
+
+      // Detect matches that just transitioned from live → finished
+      finished.forEach((m) => {
+        if (prevLiveIds.current.has(m.id)) {
+          // This match was live last poll and is now finished — trigger sync
+          startSyncRetry(m.id);
+        }
+      });
+
+      // Update the set of currently live IDs for next poll comparison
+      prevLiveIds.current = new Set(live.map((m) => m.id));
+
       setMatches(live);
       // When all matches end, reset dismissed so next live match shows the overlay
       if (live.length === 0 && typeof window !== "undefined") {
@@ -116,7 +156,7 @@ export default function LiveScoreboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [startSyncRetry]);
 
   useEffect(() => {
     poll();

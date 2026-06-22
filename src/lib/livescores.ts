@@ -40,8 +40,8 @@ export async function fetchLiveScores(): Promise<LiveMatch[]> {
       if (!comp) continue;
 
       const state = event?.status?.type?.state ?? "pre";
-      // Only include live and very recently finished matches (last ~30 min)
-      if (state !== "in") continue;
+      // Include live ("in") and finished ("post") matches; skip upcoming ("pre")
+      if (state !== "in" && state !== "post") continue;
 
       const home = comp.competitors?.find(
         (c: Record<string, unknown>) => c.homeAway === "home"
