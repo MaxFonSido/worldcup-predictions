@@ -171,24 +171,41 @@ export default function StandingsView({
                 {labels.rounds[round.stage] ?? round.stage}
               </h2>
               <div className="space-y-2">
-                {round.matches.map((m, i) => (
-                  <div key={i} className="space-y-1.5 rounded-2xl bg-white p-3 shadow-card">
-                    <BracketSide
-                      name={m.teamA}
-                      crest={m.crestA}
-                      score={m.scoreA}
-                      win={m.winner === "A"}
-                      tbd={labels.tbd}
-                    />
-                    <BracketSide
-                      name={m.teamB}
-                      crest={m.crestB}
-                      score={m.scoreB}
-                      win={m.winner === "B"}
-                      tbd={labels.tbd}
-                    />
-                  </div>
-                ))}
+                {round.matches.map((m, i) => {
+                  const kickoff = m.kickoff ? new Date(m.kickoff) : null;
+                  const dateStr = kickoff
+                    ? kickoff.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+                    : null;
+                  const timeStr = kickoff
+                    ? kickoff.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })
+                    : null;
+                  return (
+                    <div key={i} className="rounded-2xl bg-white p-3 shadow-card">
+                      {(dateStr || m.venue) && (
+                        <div className="mb-2 flex items-center justify-between text-[11px] text-muted">
+                          {dateStr && <span>{dateStr} · {timeStr}</span>}
+                          {m.venue && <span className="truncate ml-2 text-end">{m.venue}</span>}
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <BracketSide
+                          name={m.teamA}
+                          crest={m.crestA}
+                          score={m.scoreA}
+                          win={m.winner === "A"}
+                          tbd={labels.tbd}
+                        />
+                        <BracketSide
+                          name={m.teamB}
+                          crest={m.crestB}
+                          score={m.scoreB}
+                          win={m.winner === "B"}
+                          tbd={labels.tbd}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}

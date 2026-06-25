@@ -26,6 +26,7 @@ export type BracketMatch = {
   winner: "A" | "B" | null;
   status: string;
   kickoff: string;
+  venue: string | null;
 };
 
 export type Round = { stage: string; matches: BracketMatch[] };
@@ -116,6 +117,8 @@ async function fetchEspnBracket(): Promise<Round[]> {
       }
 
       const kickoff = (event.date as string) ?? "";
+      const venueObj = comp.venue as Record<string, unknown> | undefined;
+      const venue = (venueObj?.fullName as string) ?? null;
 
       const match: BracketMatch = {
         teamA: homeName,
@@ -127,6 +130,7 @@ async function fetchEspnBracket(): Promise<Round[]> {
         winner,
         status: isFinished ? "FINISHED" : "SCHEDULED",
         kickoff,
+        venue,
       };
 
       const list = byStage.get(stage) ?? [];
