@@ -27,13 +27,14 @@ export default async function MatchesPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [{ data: matches }, { data: allPicks }, { data: users }, { data: me }, { data: myPicksRaw }] = await Promise.all([
+  const [{ data: matches }, { data: users }, { data: me }, { data: myPicksRaw }, { data: allPicksRaw }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: true }),
-    supabase.from("predictions").select("match_id, user_id, pick").limit(2000),
     supabase.from("users").select("id, display_name"),
     supabase.from("users").select("avatar_emoji").eq("id", session.userId).maybeSingle(),
-    // Fetch the current user's picks in a dedicated query — never affected by total row caps
-    supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
+    // My picks — dedicated per-user query, never capped
+    supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId),
+    // All picks joined with user names — bypasses Supabase silent row cap
+    supabase.from("predictions").select("match_id, pick, users(display_name, avatar_emoji)")
   ]);
 
   const [admin, khalBalaVisible, championOpen] = await Promise.all([
@@ -54,11 +55,13 @@ export default async function MatchesPage() {
   }
   const myPickCount = myPicksRaw?.length ?? 0;
 
-  // All picks — used only for the voters display on each card
+  // All picks with names — joined at DB level, no client-side cap issue
   const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
-  for (const p of allPicks ?? []) {
+  for (const p of allPicksRaw ?? []) {
+    const user = p.users as { display_name: string; avatar_emoji: string | null } | null;
+    const name = user?.display_name ?? "?";
     const list = votersByMatch.get(p.match_id) ?? [];
-    list.push({ name: nameById.get(p.user_id) ?? "?", pick: p.pick as Pick });
+    list.push({ name, pick: p.pick as Pick });
     votersByMatch.set(p.match_id, list);
   }
 

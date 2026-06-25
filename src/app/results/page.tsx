@@ -20,15 +20,15 @@ export default async function ResultsPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [{ data: matches }, { data: allPicks }, { data: users }, { data: myPicksRaw }] = await Promise.all([
+  const [{ data: matches }, { data: users }, { data: myPicksRaw }, { data: allPicksRaw }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: false }),
-    supabase.from("predictions").select("match_id, user_id, pick").limit(2000),
     supabase.from("users").select("id, display_name, avatar_emoji"),
-    // Fetch the current user's picks in a dedicated query — never affected by total row caps
-    supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
+    // My picks — dedicated per-user query, never capped
+    supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId),
+    // All picks joined with user names — bypasses the silent 1000-row Supabase cap
+    supabase.from("predictions").select("match_id, pick, users(display_name, avatar_emoji)")
   ]);
 
-  const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));
   const emojiMap: Record<string, string> = {};
   for (const u of users ?? []) {
     if (u.avatar_emoji) emojiMap[u.display_name as string] = u.avatar_emoji;
@@ -40,11 +40,14 @@ export default async function ResultsPage() {
     myPickByMatch.set(p.match_id, p.pick as Pick);
   }
 
-  // All picks — used only for the voters display on each card
+  // All picks with names — joined at DB level, no client-side cap issue
   const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
-  for (const p of allPicks ?? []) {
+  for (const p of allPicksRaw ?? []) {
+    const user = p.users as { display_name: string; avatar_emoji: string | null } | null;
+    const name = user?.display_name ?? "?";
+    if (user?.avatar_emoji) emojiMap[name] = user.avatar_emoji;
     const list = votersByMatch.get(p.match_id) ?? [];
-    list.push({ name: nameById.get(p.user_id) ?? "?", pick: p.pick as Pick });
+    list.push({ name, pick: p.pick as Pick });
     votersByMatch.set(p.match_id, list);
   }
 
