@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
 import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db, TOTAL_MATCHES } from "@/lib/db";
@@ -19,6 +20,7 @@ export default async function MatchesPage() {
   const session = await getSession();
   if (!session) redirect("/");
 
+  noStore(); // force Next.js to never cache this page's data reads
   await syncIfStale();
 
   const lang = getLang();
