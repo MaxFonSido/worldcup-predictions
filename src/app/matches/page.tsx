@@ -27,11 +27,13 @@ export default async function MatchesPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [{ data: matches }, { data: allPicks }, { data: users }, { data: me }] = await Promise.all([
+  const [{ data: matches }, { data: allPicks }, { data: users }, { data: me }, { data: myPicksRaw }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: true }),
     supabase.from("predictions").select("match_id, user_id, pick").limit(2000),
     supabase.from("users").select("id, display_name"),
-    supabase.from("users").select("avatar_emoji").eq("id", session.userId).maybeSingle()
+    supabase.from("users").select("avatar_emoji").eq("id", session.userId).maybeSingle(),
+    // Fetch the current user's picks in a dedicated query — never affected by total row caps
+    supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
   ]);
 
   const [admin, khalBalaVisible, championOpen] = await Promise.all([
@@ -45,18 +47,19 @@ export default async function MatchesPage() {
 
   const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));
 
-  const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
+  // My picks — sourced from the dedicated per-user query, never capped
   const myPickByMatch = new Map<string, Pick>();
-  let myPickCount = 0;
+  for (const p of myPicksRaw ?? []) {
+    myPickByMatch.set(p.match_id, p.pick as Pick);
+  }
+  const myPickCount = myPicksRaw?.length ?? 0;
 
+  // All picks — used only for the voters display on each card
+  const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
   for (const p of allPicks ?? []) {
     const list = votersByMatch.get(p.match_id) ?? [];
     list.push({ name: nameById.get(p.user_id) ?? "?", pick: p.pick as Pick });
     votersByMatch.set(p.match_id, list);
-    if (p.user_id === session.userId) {
-      myPickByMatch.set(p.match_id, p.pick as Pick);
-      myPickCount++;
-    }
   }
 
   const picksLeft = Math.max(0, TOTAL_MATCHES - myPickCount);
