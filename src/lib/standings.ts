@@ -37,6 +37,118 @@ const LIVE_OR_DONE = ["FINISHED", "IN_PLAY", "PAUSED"];
 
 const STANDINGS_API = "https://api.football-data.org/v4/competitions/WC/standings";
 
+// ESPN stage slug → our internal stage key
+const ESPN_STAGE_MAP: Record<string, string> = {
+  "round-of-32": "LAST_32",
+  "round-of-16": "LAST_16",
+  "quarterfinals": "QUARTER_FINALS",
+  "semifinals": "SEMI_FINALS",
+  "3rd-place-playoff": "THIRD_PLACE",
+  "final": "FINAL",
+};
+
+// Fetch knockout bracket from ESPN — much faster to update than football-data.org
+async function fetchEspnBracket(): Promise<Round[]> {
+  // Knockout dates: Round of 32 (Jun 28–Jul 3), R16 (Jul 4–7), QF (Jul 9–11),
+  // SF (Jul 14–15), 3rd place (Jul 18), Final (Jul 19)
+  const dates = [
+    "20260628", "20260629", "20260630",
+    "20260701", "20260702", "20260703",
+    "20260704", "20260705", "20260706", "20260707",
+    "20260709", "20260710", "20260711",
+    "20260714", "20260715",
+    "20260718", "20260719",
+  ];
+
+  try {
+    const results = await Promise.all(
+      dates.map((d) =>
+        fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${d}`, {
+          next: { revalidate: 300 },
+        })
+          .then((r) => r.json())
+          .then((data) => data.events ?? [])
+          .catch(() => [])
+      )
+    );
+
+    const allEvents = results.flat() as Record<string, unknown>[];
+
+    // Group events by stage
+    const byStage = new Map<string, BracketMatch[]>();
+
+    for (const event of allEvents) {
+      const season = event.season as Record<string, unknown> | undefined;
+      const slug = season?.slug as string | undefined;
+      if (!slug) continue;
+
+      const stage = ESPN_STAGE_MAP[slug];
+      if (!stage) continue;
+
+      const competitions = (event.competitions as Record<string, unknown>[]) ?? [];
+      const comp = competitions[0];
+      if (!comp) continue;
+
+      const competitors = (comp.competitors as Record<string, unknown>[]) ?? [];
+      const home = competitors.find((c) => (c as Record<string, unknown>).homeAway === "home") as Record<string, unknown> | undefined;
+      const away = competitors.find((c) => (c as Record<string, unknown>).homeAway === "away") as Record<string, unknown> | undefined;
+
+      const homeTeam = home?.team as Record<string, unknown> | undefined;
+      const awayTeam = away?.team as Record<string, unknown> | undefined;
+
+      const homeName = (homeTeam?.displayName as string) ?? "TBD";
+      const awayName = (awayTeam?.displayName as string) ?? "TBD";
+      const homeLogo = (homeTeam?.logo as string) ?? null;
+      const awayLogo = (awayTeam?.logo as string) ?? null;
+
+      // Scores
+      const homeScore = home?.score != null ? Number(home.score) : null;
+      const awayScore = away?.score != null ? Number(away.score) : null;
+
+      // Winner
+      const status = (comp.status as Record<string, unknown>) ?? {};
+      const statusType = (status.type as Record<string, unknown>) ?? {};
+      const isFinished = statusType.completed === true;
+      let winner: "A" | "B" | null = null;
+      if (isFinished && homeScore != null && awayScore != null) {
+        if (homeScore > awayScore) winner = "A";
+        else if (awayScore > homeScore) winner = "B";
+      }
+
+      const kickoff = (event.date as string) ?? "";
+
+      const match: BracketMatch = {
+        teamA: homeName,
+        teamB: awayName,
+        crestA: homeLogo,
+        crestB: awayLogo,
+        scoreA: isFinished ? homeScore : null,
+        scoreB: isFinished ? awayScore : null,
+        winner,
+        status: isFinished ? "FINISHED" : "SCHEDULED",
+        kickoff,
+      };
+
+      const list = byStage.get(stage) ?? [];
+      list.push(match);
+      byStage.set(stage, list);
+    }
+
+    // Sort each stage by kickoff and return in knockout order
+    return KNOCKOUT
+      .map((stage) => {
+        const matches = (byStage.get(stage) ?? []).sort(
+          (a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()
+        );
+        return { stage, matches };
+      })
+      .filter((r) => r.matches.length > 0);
+  } catch (e) {
+    console.error("fetchEspnBracket failed:", e);
+    return [];
+  }
+}
+
 type Row = {
   stage: string;
   group_name: string | null;
@@ -117,24 +229,10 @@ export async function getStandings(supabase: SupabaseClient): Promise<Standings>
 
   const all = (data ?? []) as Row[];
 
-  const rounds: Round[] = KNOCKOUT.map((stage) => {
-    const matches: BracketMatch[] = all
-      .filter((m) => m.stage === stage)
-      .map((m) => ({
-        teamA: m.team_a,
-        teamB: m.team_b,
-        crestA: m.team_a_crest,
-        crestB: m.team_b_crest,
-        scoreA: m.score_a,
-        scoreB: m.score_b,
-        winner: m.result === "TEAM_A" ? "A" : m.result === "TEAM_B" ? "B" : null,
-        status: m.status,
-        kickoff: m.kickoff_utc
-      }));
-    return { stage, matches };
-  }).filter((r) => r.matches.length > 0);
+  // Use ESPN for the knockout bracket — it updates team names much faster
+  const rounds = await fetchEspnBracket();
 
-  // Detect which phase to show by default
+  // Detect which phase to show by default (use DB matches for status check)
   const knockoutStarted = all.some(
     (m) => KNOCKOUT.includes(m.stage) && LIVE_OR_DONE.includes(m.status)
   );
