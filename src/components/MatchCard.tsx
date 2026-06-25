@@ -128,7 +128,7 @@ export default function MatchCard({
     });
     setBusy(false);
     if (!res.ok) setSelected(prev);
-    window.location.reload();
+    router.refresh();
   }
 
   const voters = (p: Pick) => picks.filter((x) => x.pick === p).map((x) => x.name);
