@@ -58,7 +58,8 @@ export default async function MatchesPage() {
   // All picks with names — joined at DB level, no client-side cap issue
   const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
   for (const p of allPicksRaw ?? []) {
-    const user = p.users as { display_name: string; avatar_emoji: string | null } | null;
+    const userArr = p.users as { display_name: string; avatar_emoji: string | null }[] | null;
+    const user = Array.isArray(userArr) ? userArr[0] : userArr;
     const name = user?.display_name ?? "?";
     const list = votersByMatch.get(p.match_id) ?? [];
     list.push({ name, pick: p.pick as Pick });
