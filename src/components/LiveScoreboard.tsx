@@ -146,10 +146,13 @@ export default function LiveScoreboard() {
       prevLiveIds.current = new Set(live.map((m) => m.id));
 
       setMatches(live);
-      // When all matches end, reset dismissed so next live match shows the overlay
+      // When all matches end, reset dismissed ONLY if it was set,
+      // so we don't trigger unnecessary re-renders every 5 seconds
       if (live.length === 0 && typeof window !== "undefined") {
-        sessionStorage.removeItem("live-dismissed");
-        setDismissed(false);
+        if (sessionStorage.getItem("live-dismissed") === "1") {
+          sessionStorage.removeItem("live-dismissed");
+          setDismissed(false);
+        }
       }
     } catch {
       /* ignore */
