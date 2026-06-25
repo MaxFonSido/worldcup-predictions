@@ -10,6 +10,7 @@ import AdminSendDigest from "@/components/AdminSendDigest";
 import AdminKhalBalaToggle from "@/components/AdminKhalBalaToggle";
 import AdminChampionToggle from "@/components/AdminChampionToggle";
 import AdminFlagToggle from "@/components/AdminFlagToggle";
+import AdminForceSync from "@/components/AdminForceSync";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,10 @@ export default async function AdminPage() {
       <Nav lang={lang} displayName={session.displayName} userId={session.userId} active="admin" />
       <main className="mx-auto max-w-2xl px-5 py-6">
         <h1 className="mb-4 text-xl font-bold text-pitch-deep">{tr.adminTitle}</h1>
+
+        <section className="mb-6">
+          <AdminForceSync />
+        </section>
 
         <section className="mb-6">
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{tr.adminRegTitle}</h2>
