@@ -177,9 +177,9 @@ export default function MatchCard({
             {names.length === 0 ? (
               <span className="text-xs text-muted/70">—</span>
             ) : (
-              names.map((n) => (
+              names.map((n, i) => (
                 <span
-                  key={n}
+                  key={`${n}-${i}`}
                   className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/70"
                 >
                   {emojiFor(n, emojiMap?.[n])} {n}

@@ -18,7 +18,7 @@ export default async function ChatPage() {
 
   const [{ data: msgs }, { data: users }, { data: reactions }] = await Promise.all([
     supabase.from("messages").select("id, user_id, body, created_at").order("created_at", { ascending: true }).limit(200),
-    supabase.from("users").select("id, display_name, avatar_emoji"),
+    supabase.from("users").select("id, display_name, avatar_emoji").limit(500),
     supabase.from("reactions").select("message_id, user_id, emoji")
   ]);
   const nameById = new Map((users ?? []).map((u) => [u.id, u.display_name as string]));

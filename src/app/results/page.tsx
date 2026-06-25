@@ -23,7 +23,7 @@ export default async function ResultsPage() {
   const [{ data: matches }, { data: allPicks }, { data: users }, { data: myPicksRaw }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: false }),
     supabase.from("predictions").select("match_id, user_id, pick").limit(2000),
-    supabase.from("users").select("id, display_name, avatar_emoji"),
+    supabase.from("users").select("id, display_name, avatar_emoji").limit(500),
     supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
   ]);
 
@@ -43,7 +43,7 @@ export default async function ResultsPage() {
   const votersByMatch = new Map<string, { name: string; pick: Pick }[]>();
   for (const p of allPicks ?? []) {
     const list = votersByMatch.get(p.match_id) ?? [];
-    list.push({ name: nameById.get(p.user_id) ?? "?", pick: p.pick as Pick });
+    list.push({ name: nameById.get(p.user_id) ?? `User-${p.user_id.slice(0, 4)}`, pick: p.pick as Pick });
     votersByMatch.set(p.match_id, list);
   }
 

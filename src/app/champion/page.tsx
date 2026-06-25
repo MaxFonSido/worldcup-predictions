@@ -24,7 +24,7 @@ export default async function ChampionPage() {
   const [participants, championOpen, { data: users }] = await Promise.all([
     getParticipants(supabase),
     isChampionPickingEnabled(supabase),
-    supabase.from("users").select("id, display_name, champion_pick, avatar_emoji")
+    supabase.from("users").select("id, display_name, champion_pick, avatar_emoji").limit(500)
   ]);
 
   const options = participants.map((c) => ({ name: c, titles: titlesFor(c) }));

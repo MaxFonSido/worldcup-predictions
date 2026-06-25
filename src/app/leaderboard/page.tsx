@@ -18,7 +18,7 @@ export default async function LeaderboardPage() {
   const [{ data: board }, { data: users }, { data: matches }, { data: myPreds }] =
     await Promise.all([
       supabase.from("leaderboard").select("id, display_name, golden_tokens"),
-      supabase.from("users").select("id, champion_pick, avatar_emoji"),
+      supabase.from("users").select("id, champion_pick, avatar_emoji").limit(500),
       supabase.from("matches").select("id, stage, team_a, team_b, result, status, kickoff_utc"),
       supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
     ]);
