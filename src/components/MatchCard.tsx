@@ -133,8 +133,10 @@ export default function MatchCard({
     });
     setBusy(false);
     if (res.ok) {
-      // Lock the pick in local state — no re-render can override this
+      // Lock the pick in local state so the UI stays correct immediately,
+      // then refresh the server cache so the pick persists on next navigation.
       setConfirmedPick(pick);
+      router.refresh();
     } else {
       setSelected(prev); // revert optimistic on failure
     }
