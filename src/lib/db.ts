@@ -11,7 +11,15 @@ export function db(): SupabaseClient {
   if (!url || !key) {
     throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   }
-  client = createClient(url, key, { auth: { persistSession: false } });
+  client = createClient(url, key, {
+    auth: { persistSession: false },
+    global: {
+      // Force every Supabase query to bypass Vercel's Data Cache.
+      // Without this, page reads can return stale snapshots after writes
+      // (e.g. picks appearing to "disappear" right after saving).
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
+  });
   return client;
 }
 
