@@ -27,29 +27,12 @@ export default async function MatchesPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [
-    { data: matches, error: matchesError },
-    { data: allPicks, error: picksError },
-    { data: users, error: usersError },
-    { data: me }
-  ] = await Promise.all([
+  const [{ data: matches }, { data: allPicks }, { data: users }, { data: me }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: true }),
-    supabase.from("predictions").select("match_id, user_id, pick"),
+    supabase.from("predictions").select("match_id, user_id, pick").limit(2000),
     supabase.from("users").select("id, display_name"),
     supabase.from("users").select("avatar_emoji").eq("id", session.userId).maybeSingle()
   ]);
-
-  // DIAGNOSTIC LOGGING — remove after bug is confirmed
-  console.log("[matches/page] DB results:", {
-    matchesCount: matches?.length ?? null,
-    matchesError: matchesError?.message ?? null,
-    picksCount: allPicks?.length ?? null,
-    picksError: picksError?.message ?? null,
-    usersCount: users?.length ?? null,
-    usersError: usersError?.message ?? null,
-    sessionUserId: session.userId,
-    sessionName: session.displayName,
-  });
 
   const [admin, khalBalaVisible, championOpen] = await Promise.all([
     isAdmin(supabase, session.displayName),
@@ -75,12 +58,6 @@ export default async function MatchesPage() {
       myPickCount++;
     }
   }
-
-  // DIAGNOSTIC LOGGING — remove after bug is confirmed
-  console.log("[matches/page] myPickByMatch:", {
-    myPickCount,
-    myPicks: Object.fromEntries(myPickByMatch),
-  });
 
   const picksLeft = Math.max(0, TOTAL_MATCHES - myPickCount);
 

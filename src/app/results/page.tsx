@@ -22,7 +22,7 @@ export default async function ResultsPage() {
 
   const [{ data: matches }, { data: allPicks }, { data: users }] = await Promise.all([
     supabase.from("matches").select("*").order("kickoff_utc", { ascending: false }),
-    supabase.from("predictions").select("match_id, user_id, pick"),
+    supabase.from("predictions").select("match_id, user_id, pick").limit(2000),
     supabase.from("users").select("id, display_name, avatar_emoji")
   ]);
 
