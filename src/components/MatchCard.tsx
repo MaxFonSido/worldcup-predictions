@@ -98,8 +98,13 @@ export default function MatchCard({
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Pick | null>(myPick);
+  const [confirmedPick, setConfirmedPick] = useState<Pick | null>(myPick);
   const [busy, setBusy] = useState(false);
   const [showPicks, setShowPicks] = useState(false);
+
+  // Keep display in sync with server prop (e.g. on initial load)
+  // but NEVER override a locally confirmed pick from this session.
+  const displayPick = confirmedPick ?? selected ?? myPick;
 
   const finished = match.status === "FINISHED" && match.result && match.result !== "VOID";
   const voided = match.result === "VOID" || match.status === "CANCELLED";
@@ -118,8 +123,8 @@ export default function MatchCard({
 
   async function choose(pick: Pick) {
     if (locked || busy) return;
-    const prev = selected;
-    setSelected(pick); // optimistic
+    const prev = confirmedPick ?? selected;
+    setSelected(pick); // optimistic display
     setBusy(true);
     const res = await fetch("/api/pick", {
       method: "POST",
@@ -127,14 +132,18 @@ export default function MatchCard({
       body: JSON.stringify({ matchId: match.id, pick })
     });
     setBusy(false);
-    if (!res.ok) setSelected(prev);
-
+    if (res.ok) {
+      // Lock the pick in local state — no re-render can override this
+      setConfirmedPick(pick);
+    } else {
+      setSelected(prev); // revert optimistic on failure
+    }
   }
 
   const voters = (p: Pick) => picks.filter((x) => x.pick === p).map((x) => x.name);
 
   const option = (pick: Pick, title: string, sub?: string) => {
-    const isMine = selected === pick;
+    const isMine = displayPick === pick;
     const isWinner = finished && match.result === pick;
     const names = voters(pick);
     const total = picks.length;
