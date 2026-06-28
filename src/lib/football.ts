@@ -43,16 +43,41 @@ export async function syncMatches(): Promise<{ updated: number }> {
   const token = process.env.FOOTBALL_DATA_TOKEN;
   if (!token) throw new Error("Missing FOOTBALL_DATA_TOKEN");
 
-  const res = await fetch(API, {
-    headers: { "X-Auth-Token": token },
-    cache: "no-store"
-  });
-  if (!res.ok) throw new Error(`football-data responded ${res.status}`);
+  // Fetch all matches + a separate call for knockout stages
+  // The full endpoint returns null team names for LAST_32+, but the stage-specific endpoint has real names
+  const [resAll, resKnockout] = await Promise.all([
+    fetch(API, { headers: { "X-Auth-Token": token }, cache: "no-store" }),
+    fetch(`${API}?stage=LAST_32`, { headers: { "X-Auth-Token": token }, cache: "no-store" }),
+  ]);
 
-  const data = (await res.json()) as { matches: ApiMatch[] };
+  if (!resAll.ok) throw new Error(`football-data responded ${resAll.status}`);
+
+  const data = (await resAll.json()) as { matches: ApiMatch[] };
   const matches = data.matches ?? [];
 
-  const rows = matches.map((m) => ({
+  // Build a map of knockout match overrides keyed by external ID
+  const knockoutOverrides = new Map<number, ApiMatch>();
+  if (resKnockout.ok) {
+    const knockoutData = (await resKnockout.json()) as { matches: ApiMatch[] };
+    for (const m of knockoutData.matches ?? []) {
+      knockoutOverrides.set(m.id, m);
+    }
+  }
+
+  // Merge: use knockout-specific data for team names when available
+  const mergedMatches = matches.map((m) => {
+    const override = knockoutOverrides.get(m.id);
+    if (override) {
+      return {
+        ...m,
+        homeTeam: override.homeTeam?.name ? override.homeTeam : m.homeTeam,
+        awayTeam: override.awayTeam?.name ? override.awayTeam : m.awayTeam,
+      };
+    }
+    return m;
+  });
+
+  const rows = mergedMatches.map((m) => ({
     external_id: m.id,
     stage: m.stage,
     group_name: m.group,
