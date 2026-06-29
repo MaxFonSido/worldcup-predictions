@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { SignJWT } from "jose";
+import { emojiFor } from "@/lib/avatar";
 
 export async function GET() {
   const session = await getSession();
@@ -23,11 +24,15 @@ export async function GET() {
     .eq("id", session.userId)
     .maybeSingle();
 
+  // Always resolve to a real emoji — same logic the main app uses for display.
+  // Users who never set a custom emoji get their deterministic name-based emoji.
+  const resolvedEmoji = emojiFor(session.displayName, me?.avatar_emoji);
+
   const secret = new TextEncoder().encode(sharedSecret);
 
   const token = await new SignJWT({
     displayName: session.displayName,
-    avatarEmoji: me?.avatar_emoji ?? null,
+    avatarEmoji: resolvedEmoji,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
