@@ -4,6 +4,7 @@ import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { emojiFor } from "@/lib/avatar";
 import Nav from "@/components/Nav";
+import ScoreBreakdown, { type BreakdownLine } from "@/components/ScoreBreakdown";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +16,13 @@ export default async function LeaderboardPage() {
   const tr = t(lang);
   const supabase = db();
 
-  const [{ data: board }, { data: users }, { data: matches }, { data: myPreds }] =
+  const [{ data: board }, { data: users }, { data: matches }, { data: myPreds }, { data: allPreds }] =
     await Promise.all([
       supabase.from("leaderboard").select("id, display_name, golden_tokens"),
       supabase.from("users").select("id, champion_pick, avatar_emoji").limit(500),
       supabase.from("matches").select("id, stage, team_a, team_b, result, status, kickoff_utc"),
-      supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
+      supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId),
+      supabase.from("predictions").select("user_id, match_id, pick")
     ]);
 
   const allMatches = matches ?? [];
@@ -35,6 +37,35 @@ export default async function LeaderboardPage() {
   const tournamentOver = champion !== null;
 
   const pickById = new Map((users ?? []).map((u) => [u.id, (u.champion_pick as string | null) ?? null]));
+
+  // ---- Per-user match breakdown (chronological, includes pending) ----
+  const matchById = new Map(allMatches.map((m) => [m.id as string, m]));
+  const breakdownByUser = new Map<string, (BreakdownLine & { kickoff: string })[]>();
+  for (const p of allPreds ?? []) {
+    const m = matchById.get(p.match_id as string);
+    if (!m) continue;
+    const teamA = m.team_a as string;
+    const teamB = m.team_b as string;
+    const guess = p.pick === "TEAM_A" ? teamA : p.pick === "TEAM_B" ? teamB : "Draw";
+    const isFinished = m.status === "FINISHED" && m.result && m.result !== "VOID";
+    const status: BreakdownLine["status"] = !isFinished
+      ? "pending"
+      : p.pick === m.result
+      ? "correct"
+      : "wrong";
+    const list = breakdownByUser.get(p.user_id as string) ?? [];
+    list.push({
+      matchId: p.match_id as string,
+      label: `${teamA} vs ${teamB}`,
+      guess,
+      status,
+      kickoff: m.kickoff_utc as string,
+    });
+    breakdownByUser.set(p.user_id as string, list);
+  }
+  for (const list of breakdownByUser.values()) {
+    list.sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
+  }
 
   const rows = (board ?? []).map((r) => {
     const champPick = pickById.get(r.id) ?? null;
@@ -135,31 +166,36 @@ export default async function LeaderboardPage() {
               return (
                 <li
                   key={r.id}
-                  className={`flex items-center justify-between rounded-2xl px-5 py-4 shadow-card ${
+                  className={`rounded-2xl px-5 py-4 shadow-card ${
                     isMe ? "bg-pitch/8 ring-2 ring-pitch/30" : "bg-white"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="tnum w-8 text-center text-lg font-bold text-muted">
-                      {medal(i) ?? i + 1}
-                    </span>
-                    <div>
-                      <span className="font-semibold">
-                        {emojiFor(r.name, r.emoji)} {r.name}
-                        {isMe && <span className="ms-2 text-xs font-normal text-pitch">({tr.you})</span>}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="tnum w-8 text-center text-lg font-bold text-muted">
+                        {medal(i) ?? i + 1}
                       </span>
-                      {r.champPick && <div className="text-xs text-muted">🏆 {r.champPick}</div>}
+                      <div>
+                        <span className="font-semibold">
+                          {emojiFor(r.name, r.emoji)} {r.name}
+                          {isMe && <span className="ms-2 text-xs font-normal text-pitch">({tr.you})</span>}
+                        </span>
+                        {r.champPick && <div className="text-xs text-muted">🏆 {r.champPick}</div>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {r.diamond && (
+                        <span title={tr.diamondWord} className="text-lg">
+                          💎
+                        </span>
+                      )}
+                      <span className="tnum text-2xl font-bold text-gold">{r.golden}</span>
+                      <span className="text-lg">🪙</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {r.diamond && (
-                      <span title={tr.diamondWord} className="text-lg">
-                        💎
-                      </span>
-                    )}
-                    <span className="tnum text-2xl font-bold text-gold">{r.golden}</span>
-                    <span className="text-lg">🪙</span>
-                  </div>
+                  <ScoreBreakdown
+                    lines={(breakdownByUser.get(r.id) ?? []).map(({ kickoff, ...rest }) => rest)}
+                  />
                 </li>
               );
             })}
