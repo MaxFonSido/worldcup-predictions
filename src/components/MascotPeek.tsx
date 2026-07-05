@@ -1,55 +1,86 @@
 "use client";
 
-// V-ronaldo — CR7-inspired mascot that peeks in from a random edge shortly
-// after login, hits the Siuuu pose, holds it, and slides back out.
-// Shows once per browser session (sessionStorage flag). Purely decorative:
-// pointer-events disabled, aria-hidden, no layout impact.
+// V-ronaldo2 — CR7-inspired mascot in Portugal colors that repeatedly peeks
+// in from random spots along random edges while the user is on the page.
+// After each peek he waits a random few seconds and pops up somewhere else.
+// Purely decorative: pointer-events disabled, aria-hidden, no layout impact.
 
 import { useEffect, useState } from "react";
 
-type Edge = "bottom-right" | "bottom-left" | "side-right" | "side-left";
+type Edge = "bottom" | "left" | "right";
 
-const EDGES: Edge[] = ["bottom-right", "bottom-left", "side-right", "side-left"];
+const EDGES: Edge[] = ["bottom", "left", "right"];
 
-const APPEAR_DELAY_MS = 2500; // "first few seconds" after landing
-const HOLD_MS = 2600; // how long the pose is held
+const FIRST_DELAY_MS = 2500; // first appearance shortly after landing
+const MIN_GAP_MS = 4000; // random pause between peeks: 4–12 s
+const MAX_GAP_MS = 12000;
+const HOLD_MS = 2500; // how long the pose is held
 const SLIDE_MS = 600; // slide in/out duration
 
+type Spot = { edge: Edge; offsetPct: number };
+
+function randomSpot(prev: Spot | null): Spot {
+  // Never repeat the exact same edge twice in a row
+  let edge: Edge;
+  do {
+    edge = EDGES[Math.floor(Math.random() * EDGES.length)];
+  } while (prev && edge === prev.edge && EDGES.length > 1);
+  // Random position along the edge (kept away from the extreme corners/Nav)
+  const offsetPct = 15 + Math.random() * 55; // 15%–70%
+  return { edge, offsetPct };
+}
+
 export default function MascotPeek() {
-  const [edge, setEdge] = useState<Edge | null>(null);
+  const [spot, setSpot] = useState<Spot | null>(null);
   const [phase, setPhase] = useState<"hidden" | "in" | "out">("hidden");
 
   useEffect(() => {
-    if (sessionStorage.getItem("mascot-shown") === "1") return;
-    sessionStorage.setItem("mascot-shown", "1");
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const wait = (ms: number) =>
+      new Promise<void>((res) => {
+        timers.push(setTimeout(res, ms));
+      });
 
-    const chosen = EDGES[Math.floor(Math.random() * EDGES.length)];
-    const t1 = setTimeout(() => {
-      setEdge(chosen);
-      // next frame so the transition actually animates
-      requestAnimationFrame(() => requestAnimationFrame(() => setPhase("in")));
-    }, APPEAR_DELAY_MS);
-    const t2 = setTimeout(() => setPhase("out"), APPEAR_DELAY_MS + SLIDE_MS + HOLD_MS);
-    const t3 = setTimeout(
-      () => setEdge(null),
-      APPEAR_DELAY_MS + SLIDE_MS + HOLD_MS + SLIDE_MS + 100
-    );
+    let prev: Spot | null = null;
+
+    async function loop() {
+      await wait(FIRST_DELAY_MS);
+      while (!cancelled) {
+        const s = randomSpot(prev);
+        prev = s;
+        if (cancelled) return;
+        setSpot(s);
+        setPhase("hidden");
+        await wait(60); // let it mount off-screen before animating
+        if (cancelled) return;
+        setPhase("in");
+        await wait(SLIDE_MS + HOLD_MS);
+        if (cancelled) return;
+        setPhase("out");
+        await wait(SLIDE_MS + 100);
+        if (cancelled) return;
+        setSpot(null);
+        await wait(MIN_GAP_MS + Math.random() * (MAX_GAP_MS - MIN_GAP_MS));
+      }
+    }
+
+    loop();
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      cancelled = true;
+      timers.forEach(clearTimeout);
     };
   }, []);
 
-  if (!edge) return null;
+  if (!spot) return null;
 
-  const onLeft = edge === "bottom-left" || edge === "side-left";
-  const isSide = edge === "side-left" || edge === "side-right";
+  const { edge, offsetPct } = spot;
+  const isSide = edge === "left" || edge === "right";
+  const onLeft = edge === "left";
 
-  // Position + off/on-screen transforms per edge
   const pos: React.CSSProperties = isSide
-    ? { top: "40%", [onLeft ? "left" : "right"]: 0 } as React.CSSProperties
-    : { bottom: 0, [onLeft ? "left" : "right"]: "12px" } as React.CSSProperties;
+    ? ({ top: `${offsetPct}%`, [edge]: 0 } as React.CSSProperties)
+    : ({ bottom: 0, left: `${offsetPct}%` } as React.CSSProperties);
 
   const hiddenTransform = isSide
     ? `translateX(${onLeft ? "-110%" : "110%"})`
@@ -65,20 +96,20 @@ export default function MascotPeek() {
         pointerEvents: "none",
         transition: `transform ${SLIDE_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
         transform: phase === "in" ? shownTransform : hiddenTransform,
-        // Mirror the character so he faces into the screen from either side
-        ...(onLeft ? {} : {}),
         ...pos,
       }}
     >
-      <div style={{ transform: onLeft ? "none" : "scaleX(-1)" }}>
+      {/* Mirror when entering from the right so he faces into the screen */}
+      <div style={{ transform: edge === "right" ? "scaleX(-1)" : "none" }}>
         <SiuuuGuy />
       </div>
     </div>
   );
 }
 
-// Stylized cartoon footballer inspired by the classic #7 look —
-// spiky swept hair, white jersey with green trim, arms-out celebration pose.
+// Stylized cartoon footballer inspired by the classic #7 look, wearing
+// Portugal's official kit: deep red shirt, green trim, gold number,
+// green shorts, red socks.
 function SiuuuGuy() {
   return (
     <svg
@@ -93,24 +124,24 @@ function SiuuuGuy() {
         <path d="M52 108 L42 132" fill="none" stroke="#f1c8a5" strokeWidth="8" strokeLinecap="round" />
         <path d="M68 108 L78 132" fill="none" stroke="#f1c8a5" strokeWidth="8" strokeLinecap="round" />
       </g>
-      {/* Shorts */}
-      <path d="M46 96 h28 l-3 16 h-8 l-3-9 -3 9 h-8 Z" fill="#1e3a5f" stroke="#16304f" strokeWidth="1.5" />
+      {/* Shorts — Portugal green */}
+      <path d="M46 96 h28 l-3 16 h-8 l-3-9 -3 9 h-8 Z" fill="#046a38" stroke="#03502a" strokeWidth="1.5" />
       {/* Boots */}
       <path d="M42 130 l-10 5 q-2 2 1 3 h13 q2 0 2-3 l-1-5 Z" fill="#111827" />
       <path d="M78 130 l10 5 q2 2 -1 3 h-13 q-2 0 -2-3 l1-5 Z" fill="#111827" />
-      {/* Socks */}
-      <rect x="40" y="120" width="9" height="12" rx="3" fill="#ffffff" stroke="#d1d5db" />
-      <rect x="71" y="120" width="9" height="12" rx="3" fill="#ffffff" stroke="#d1d5db" />
+      {/* Socks — Portugal red */}
+      <rect x="40" y="120" width="9" height="12" rx="3" fill="#c8102e" stroke="#9d0d24" />
+      <rect x="71" y="120" width="9" height="12" rx="3" fill="#c8102e" stroke="#9d0d24" />
 
-      {/* Torso — chest puffed forward */}
+      {/* Torso — chest puffed forward, Portugal deep red */}
       <path
         d="M46 64 q14 -8 28 0 l3 32 q-17 5 -34 0 Z"
-        fill="#ffffff"
-        stroke="#d1d5db"
+        fill="#c8102e"
+        stroke="#9d0d24"
         strokeWidth="1.5"
       />
-      {/* Green trim + number 7 */}
-      <path d="M46 64 q14 -8 28 0 l0.6 6 q-14.6 -7 -29.2 0 Z" fill="#15803d" opacity="0.9" />
+      {/* Green collar trim + gold number 7 */}
+      <path d="M46 64 q14 -8 28 0 l0.6 6 q-14.6 -7 -29.2 0 Z" fill="#046a38" opacity="0.95" />
       <text
         x="60"
         y="90"
@@ -118,7 +149,7 @@ function SiuuuGuy() {
         fontFamily="Arial, sans-serif"
         fontSize="16"
         fontWeight="bold"
-        fill="#15803d"
+        fill="#f2c14e"
       >
         7
       </text>
@@ -138,9 +169,9 @@ function SiuuuGuy() {
         strokeWidth="8"
         strokeLinecap="round"
       />
-      {/* Jersey sleeves */}
-      <path d="M46 64 q-8 3 -12 9 l6 6 q6 -7 12 -9 Z" fill="#ffffff" stroke="#d1d5db" strokeWidth="1.2" />
-      <path d="M74 64 q8 3 12 9 l-6 6 q-6 -7 -12 -9 Z" fill="#ffffff" stroke="#d1d5db" strokeWidth="1.2" />
+      {/* Jersey sleeves — red with green cuff */}
+      <path d="M46 64 q-8 3 -12 9 l6 6 q6 -7 12 -9 Z" fill="#c8102e" stroke="#046a38" strokeWidth="1.5" />
+      <path d="M74 64 q8 3 12 9 l-6 6 q-6 -7 -12 -9 Z" fill="#c8102e" stroke="#046a38" strokeWidth="1.5" />
 
       {/* Head — tilted slightly up, confident */}
       <g transform="rotate(-6 60 44)">
