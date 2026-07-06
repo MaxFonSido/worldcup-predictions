@@ -4,8 +4,10 @@ import { headers } from "next/headers";
 import { getLang, dir } from "@/lib/i18n";
 import { isNight } from "@/lib/theme";
 import { db } from "@/lib/db";
-import { isFlagSeasonEnabled } from "@/lib/admin";
+import { getSession } from "@/lib/session";
+import { isFlagSeasonEnabled, isAdmin, isMascotEnabled } from "@/lib/admin";
 import FlagWaveBackground from "@/components/FlagWaveBackground";
+import MascotPeek from "@/components/MascotPeek";
 import "./globals.css";
 
 // Vazirmatn covers both Persian and Latin scripts beautifully — one font, both languages.
@@ -43,6 +45,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Flag background — manual switch from Admin, applies to every page from here.
   const flagOn = await isFlagSeasonEnabled(db());
 
+  // CR7 reminder mascot — app-wide, logged-in users only, admin-gated toggle.
+  const session = await getSession();
+  let showMascot = false;
+  if (session) {
+    const supabase = db();
+    const admin = await isAdmin(supabase, session.displayName);
+    const mascotOn = await isMascotEnabled(supabase);
+    showMascot = admin || mascotOn;
+  }
+
   return (
     <html
       lang={lang}
@@ -51,6 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="font-sans has-bottom-nav">
         {flagOn && <FlagWaveBackground />}
+        {showMascot && <MascotPeek />}
         {children}
       </body>
     </html>

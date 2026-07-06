@@ -4,8 +4,7 @@ import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db, TOTAL_MATCHES } from "@/lib/db";
 import { syncIfStale } from "@/lib/football";
-import { isAdmin, isKhalBalaVisible, isChampionPickingEnabled, isMascotEnabled } from "@/lib/admin";
-import MascotPeek from "@/components/MascotPeek";
+import { isAdmin, isKhalBalaVisible, isChampionPickingEnabled } from "@/lib/admin";
 import Nav from "@/components/Nav";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import DayAccordion from "@/components/DayAccordion";
@@ -36,14 +35,12 @@ export default async function MatchesPage() {
     supabase.from("predictions").select("match_id, pick").eq("user_id", session.userId)
   ]);
 
-  const [admin, khalBalaVisible, championOpen, mascotOn] = await Promise.all([
+  const [admin, khalBalaVisible, championOpen] = await Promise.all([
     isAdmin(supabase, session.displayName),
     isKhalBalaVisible(supabase),
     isChampionPickingEnabled(supabase),
-    isMascotEnabled(supabase),
   ]);
   const showKhalBala = admin || khalBalaVisible;
-  const showMascot = admin || mascotOn;
 
   const myEmoji = me?.avatar_emoji ?? null;
 
@@ -190,8 +187,6 @@ export default async function MatchesPage() {
           ))}
         </div>
       </main>
-
-      {showMascot && <MascotPeek />}
     </>
   );
 }

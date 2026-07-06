@@ -1,39 +1,101 @@
 "use client";
 
-// V-ronaldo2 — CR7-inspired mascot in Portugal colors that repeatedly peeks
-// in from random spots along random edges while the user is on the page.
-// After each peek he waits a random few seconds and pops up somewhere else.
-// Purely decorative: pointer-events disabled, aria-hidden, no layout impact.
+// V-ronaldo3 — CR7 stops idle wandering and becomes a reminder: he only shows
+// up when the logged-in user has an unpicked, still-open match. Gentle mode
+// nudges occasionally; urgent mode (kickoff within 6h) nudges more often with
+// a louder pose. Each appearance: slide in from a random spot, short
+// synthesized whistle, "Put your bet!" bubble, hold, slide out.
+// Silent (no appearance at all) once everything open has been picked.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Edge = "bottom" | "left" | "right";
+type Urgency = "gentle" | "urgent";
+type ReminderStatus = "none" | "gentle" | "urgent";
 
 const EDGES: Edge[] = ["bottom", "left", "right"];
 
-const FIRST_DELAY_MS = 2500; // first appearance shortly after landing
-const MIN_GAP_MS = 4000; // random pause between peeks: 4–12 s
-const MAX_GAP_MS = 12000;
-const HOLD_MS = 2500; // how long the pose is held
-const SLIDE_MS = 600; // slide in/out duration
+const STATUS_POLL_MS = 60_000; // re-check pick status every minute
+const GENTLE_GAP_MIN_MS = 25_000; // gentle: every 25–45s
+const GENTLE_GAP_MAX_MS = 45_000;
+const URGENT_GAP_MIN_MS = 8_000; // urgent: every 8–16s
+const URGENT_GAP_MAX_MS = 16_000;
+const HOLD_MS = 2800;
+const SLIDE_MS = 600;
 
 type Spot = { edge: Edge; offsetPct: number };
 
 function randomSpot(prev: Spot | null): Spot {
-  // Never repeat the exact same edge twice in a row
   let edge: Edge;
   do {
     edge = EDGES[Math.floor(Math.random() * EDGES.length)];
   } while (prev && edge === prev.edge && EDGES.length > 1);
-  // Random position along the edge (kept away from the extreme corners/Nav)
-  const offsetPct = 15 + Math.random() * 55; // 15%–70%
+  const offsetPct = 15 + Math.random() * 55;
   return { edge, offsetPct };
 }
 
+// A short, cheerful synthesized whistle — two quick rising blasts — using the
+// Web Audio API. No audio file needed.
+function playWhistle() {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx: AudioContext = new Ctx();
+    const blast = (startAt: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(1800, startAt);
+      osc.frequency.linearRampToValueAtTime(2600, startAt + duration * 0.6);
+      osc.frequency.linearRampToValueAtTime(2200, startAt + duration);
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.linearRampToValueAtTime(0.12, startAt + 0.02);
+      gain.gain.linearRampToValueAtTime(0.0001, startAt + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(startAt);
+      osc.stop(startAt + duration + 0.02);
+    };
+    const t0 = ctx.currentTime + 0.02;
+    blast(t0, 0.16);
+    blast(t0 + 0.22, 0.22);
+    setTimeout(() => ctx.close().catch(() => {}), 700);
+  } catch {
+    // Web Audio unavailable — silently skip the sound, visuals still work.
+  }
+}
+
 export default function MascotPeek() {
+  const [reminderStatus, setReminderStatus] = useState<ReminderStatus>("none");
   const [spot, setSpot] = useState<Spot | null>(null);
   const [phase, setPhase] = useState<"hidden" | "in" | "out">("hidden");
+  const statusRef = useRef<ReminderStatus>("none");
 
+  // Poll the reminder-status API periodically.
+  useEffect(() => {
+    let cancelled = false;
+    async function poll() {
+      try {
+        const res = await fetch("/api/mascot/reminder-status", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          statusRef.current = data.status ?? "none";
+          setReminderStatus(statusRef.current);
+        }
+      } catch {
+        // Network hiccup — keep previous status, try again next tick.
+      }
+    }
+    poll();
+    const interval = setInterval(poll, STATUS_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Peek loop — re-evaluates current status on every cycle so it adapts
+  // live as urgency changes or the user finishes picking.
   useEffect(() => {
     let cancelled = false;
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -45,23 +107,33 @@ export default function MascotPeek() {
     let prev: Spot | null = null;
 
     async function loop() {
-      await wait(FIRST_DELAY_MS);
       while (!cancelled) {
+        const status = statusRef.current;
+        if (status === "none") {
+          await wait(2000); // idle check, cheap
+          continue;
+        }
+        const urgency: Urgency = status === "urgent" ? "urgent" : "gentle";
         const s = randomSpot(prev);
         prev = s;
-        if (cancelled) return;
         setSpot(s);
         setPhase("hidden");
-        await wait(60); // let it mount off-screen before animating
+        await wait(60);
         if (cancelled) return;
         setPhase("in");
+        playWhistle();
         await wait(SLIDE_MS + HOLD_MS);
         if (cancelled) return;
         setPhase("out");
         await wait(SLIDE_MS + 100);
         if (cancelled) return;
         setSpot(null);
-        await wait(MIN_GAP_MS + Math.random() * (MAX_GAP_MS - MIN_GAP_MS));
+
+        const [gapMin, gapMax] =
+          urgency === "urgent"
+            ? [URGENT_GAP_MIN_MS, URGENT_GAP_MAX_MS]
+            : [GENTLE_GAP_MIN_MS, GENTLE_GAP_MAX_MS];
+        await wait(gapMin + Math.random() * (gapMax - gapMin));
       }
     }
 
@@ -72,11 +144,12 @@ export default function MascotPeek() {
     };
   }, []);
 
-  if (!spot) return null;
+  if (!spot || reminderStatus === "none") return null;
 
   const { edge, offsetPct } = spot;
   const isSide = edge === "left" || edge === "right";
   const onLeft = edge === "left";
+  const urgent = reminderStatus === "urgent";
 
   const pos: React.CSSProperties = isSide
     ? ({ top: `${offsetPct}%`, [edge]: 0 } as React.CSSProperties)
@@ -86,6 +159,7 @@ export default function MascotPeek() {
     ? `translateX(${onLeft ? "-110%" : "110%"})`
     : "translateY(110%)";
   const shownTransform = "translate(0, 0)";
+  const shownState = phase === "in";
 
   return (
     <div
@@ -95,14 +169,69 @@ export default function MascotPeek() {
         zIndex: 60,
         pointerEvents: "none",
         transition: `transform ${SLIDE_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
-        transform: phase === "in" ? shownTransform : hiddenTransform,
+        transform: shownState ? shownTransform : hiddenTransform,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: onLeft ? "flex-start" : edge === "right" ? "flex-end" : "center",
         ...pos,
       }}
     >
-      {/* Mirror when entering from the right so he faces into the screen */}
+      <SpeechBubble show={shownState} urgent={urgent} pointLeft={edge === "left"} pointRight={edge === "right"} />
       <div style={{ transform: edge === "right" ? "scaleX(-1)" : "none" }}>
         <SiuuuGuy />
       </div>
+    </div>
+  );
+}
+
+function SpeechBubble({
+  show,
+  urgent,
+  pointLeft,
+  pointRight,
+}: {
+  show: boolean;
+  urgent: boolean;
+  pointLeft: boolean;
+  pointRight: boolean;
+}) {
+  return (
+    <div
+      style={{
+        marginBottom: "6px",
+        marginLeft: pointRight ? "auto" : undefined,
+        opacity: show ? 1 : 0,
+        transform: show
+          ? urgent
+            ? "scale(1) translateY(0)"
+            : "scale(1) translateY(0)"
+          : "scale(0.7) translateY(6px)",
+        transition: "opacity 300ms ease, transform 300ms ease",
+        animation: show && urgent ? "vronaldo-shake 0.35s ease-in-out 2" : undefined,
+      }}
+    >
+      <div
+        style={{
+          background: urgent ? "#c8102e" : "#ffffff",
+          color: urgent ? "#ffffff" : "#1f2937",
+          border: urgent ? "2px solid #7c0d20" : "2px solid #d1d5db",
+          borderRadius: "14px",
+          padding: urgent ? "8px 14px" : "6px 12px",
+          fontWeight: 800,
+          fontSize: urgent ? "15px" : "13px",
+          whiteSpace: "nowrap",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
+        }}
+      >
+        Put your bet!
+      </div>
+      <style>{`
+        @keyframes vronaldo-shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-3px) rotate(-2deg); }
+          75% { transform: translateX(3px) rotate(2deg); }
+        }
+      `}</style>
     </div>
   );
 }
