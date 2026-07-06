@@ -37,6 +37,12 @@ export async function isMascotEnabled(supabase: SupabaseClient): Promise<boolean
   return data?.value === "true"; // default: hidden
 }
 
+// Black mourning ribbon (V-ribbon) — admin-only until toggled on. Default: hidden.
+export async function isRibbonEnabled(supabase: SupabaseClient): Promise<boolean> {
+  const { data } = await supabase.from("app_meta").select("value").eq("key", "ribbon_enabled").maybeSingle();
+  return data?.value === "true"; // default: hidden
+}
+
 // Waving flag background (July 4th) — fully manual switch, no dates involved.
 export async function isFlagSeasonEnabled(supabase: SupabaseClient): Promise<boolean> {
   const { data } = await supabase.from("app_meta").select("value").eq("key", "flag_season_enabled").maybeSingle();

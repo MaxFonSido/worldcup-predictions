@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
-import { isAdmin, isRegistrationOpen, isKhalBalaVisible, isChampionPickingEnabled, isFlagSeasonEnabled, isMascotEnabled } from "@/lib/admin";
+import { isAdmin, isRegistrationOpen, isKhalBalaVisible, isChampionPickingEnabled, isFlagSeasonEnabled, isMascotEnabled, isRibbonEnabled } from "@/lib/admin";
 import AdminMascotToggle from "@/components/AdminMascotToggle";
+import AdminRibbonToggle from "@/components/AdminRibbonToggle";
 import Nav from "@/components/Nav";
 import AdminPinReset from "@/components/AdminPinReset";
 import AdminRegistrationToggle from "@/components/AdminRegistrationToggle";
@@ -30,6 +31,7 @@ export default async function AdminPage() {
   const championOpen = await isChampionPickingEnabled(supabase);
   const flagOn = await isFlagSeasonEnabled(supabase);
   const mascotOn = await isMascotEnabled(supabase);
+  const ribbonOn = await isRibbonEnabled(supabase);
 
   const { data: users } = await supabase
     .from("users")
@@ -90,6 +92,12 @@ export default async function AdminPage() {
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted">CR7 Mascot ⚽</h2>
           <p className="mb-3 mt-1 text-sm text-muted">The Siuuu mascot peeks in once per session on the Matches page</p>
           <AdminMascotToggle enabled={mascotOn} />
+        </section>
+
+        <section className="mt-6">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">Mourning Ribbon 🖤🇵🇹</h2>
+          <p className="mb-3 mt-1 text-sm text-muted">Black ribbon on the top-left corner, in memory of Portugal</p>
+          <AdminRibbonToggle enabled={ribbonOn} />
         </section>
 
         <section className="mt-6">
