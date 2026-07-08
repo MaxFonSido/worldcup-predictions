@@ -48,3 +48,15 @@ export async function isFlagSeasonEnabled(supabase: SupabaseClient): Promise<boo
   const { data } = await supabase.from("app_meta").select("value").eq("key", "flag_season_enabled").maybeSingle();
   return data?.value === "true"; // default: off
 }
+
+// 🦈 Celebration video (V41, Shark Wins) — admin-only preview until toggled on.
+export async function isCelebrationVideoEnabled(supabase: SupabaseClient): Promise<boolean> {
+  const { data } = await supabase.from("app_meta").select("value").eq("key", "celebration_video_visible").maybeSingle();
+  return data?.value === "true"; // default: hidden
+}
+
+// YouTube video ID for the Shark-wins cut — set from the Admin page, no redeploy needed.
+export async function getCelebrationVideoId(supabase: SupabaseClient): Promise<string> {
+  const { data } = await supabase.from("app_meta").select("value").eq("key", "celebration_video_id_shark").maybeSingle();
+  return (data?.value as string) ?? "";
+}
