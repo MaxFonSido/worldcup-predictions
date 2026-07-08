@@ -6,7 +6,7 @@ import { isAdmin } from "@/lib/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// V41 — accepts { enabled?: boolean, videoId?: string } and upserts the
+// V41.1 — accepts { enabled?: boolean, videoUrl?: string } and upserts the
 // matching app_meta keys. Same auth pattern as the other admin toggles.
 export async function POST(req: Request) {
   const session = await getSession();
@@ -24,8 +24,8 @@ export async function POST(req: Request) {
   if (typeof body.enabled === "boolean") {
     rows.push({ key: "celebration_video_visible", value: body.enabled ? "true" : "false" });
   }
-  if (typeof body.videoId === "string") {
-    rows.push({ key: "celebration_video_id_shark", value: body.videoId.trim() });
+  if (typeof body.videoUrl === "string") {
+    rows.push({ key: "celebration_video_url_shark", value: body.videoUrl.trim() });
   }
   if (rows.length === 0) return NextResponse.json({ error: "bad-request" }, { status: 400 });
 

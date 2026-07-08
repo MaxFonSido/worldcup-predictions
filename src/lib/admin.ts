@@ -55,8 +55,13 @@ export async function isCelebrationVideoEnabled(supabase: SupabaseClient): Promi
   return data?.value === "true"; // default: hidden
 }
 
-// YouTube video ID for the Shark-wins cut — set from the Admin page, no redeploy needed.
-export async function getCelebrationVideoId(supabase: SupabaseClient): Promise<string> {
-  const { data } = await supabase.from("app_meta").select("value").eq("key", "celebration_video_id_shark").maybeSingle();
-  return (data?.value as string) ?? "";
+// V41.1 — direct MP4 URL (GitHub Release asset), replacing the earlier YouTube ID.
+// Defaults to the shark-cut release so it works out of the box; still editable
+// from Admin (e.g. a re-compressed file, or the Dyno-wins cut on July 19).
+const DEFAULT_CELEBRATION_VIDEO_URL =
+  "https://github.com/MaxFonSido/worldcup-predictions/releases/download/video-v1/Sharki.Wins.compressed.mp4";
+
+export async function getCelebrationVideoUrl(supabase: SupabaseClient): Promise<string> {
+  const { data } = await supabase.from("app_meta").select("value").eq("key", "celebration_video_url_shark").maybeSingle();
+  return (data?.value as string) || DEFAULT_CELEBRATION_VIDEO_URL;
 }

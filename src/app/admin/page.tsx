@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getLang, t } from "@/lib/i18n";
 import { db } from "@/lib/db";
-import { isAdmin, isRegistrationOpen, isKhalBalaVisible, isChampionPickingEnabled, isFlagSeasonEnabled, isMascotEnabled, isRibbonEnabled, isCelebrationVideoEnabled, getCelebrationVideoId } from "@/lib/admin";
+import { isAdmin, isRegistrationOpen, isKhalBalaVisible, isChampionPickingEnabled, isFlagSeasonEnabled, isMascotEnabled, isRibbonEnabled, isCelebrationVideoEnabled, getCelebrationVideoUrl } from "@/lib/admin";
 import AdminMascotToggle from "@/components/AdminMascotToggle";
 import AdminRibbonToggle from "@/components/AdminRibbonToggle";
 import AdminCelebrationToggle from "@/components/AdminCelebrationToggle";
@@ -34,7 +34,7 @@ export default async function AdminPage() {
   const mascotOn = await isMascotEnabled(supabase);
   const ribbonOn = await isRibbonEnabled(supabase);
   const celebrationOn = await isCelebrationVideoEnabled(supabase);
-  const celebrationId = await getCelebrationVideoId(supabase);
+  const celebrationUrl = await getCelebrationVideoUrl(supabase);
 
   const { data: users } = await supabase
     .from("users")
@@ -109,7 +109,7 @@ export default async function AdminPage() {
             &quot;The Prediction&quot; premiere — save the YouTube ID, preview it yourself, then show to all.
             Auto-opens once per person; the banner stays for rewatching.
           </p>
-          <AdminCelebrationToggle enabled={celebrationOn} videoId={celebrationId} />
+          <AdminCelebrationToggle enabled={celebrationOn} videoUrl={celebrationUrl} />
         </section>
 
         <section className="mt-6">

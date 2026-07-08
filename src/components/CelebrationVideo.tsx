@@ -1,12 +1,12 @@
 "use client";
 
-// V41 — 🦈 Celebration Video (Shark Wins)
+// V41.1 — 🦈 Celebration Video (Shark Wins)
 // A cinematic overlay that premieres "The Prediction" after the final:
 //   • Auto-opens ONCE per device when the admin flag is on (localStorage).
 //   • A slim banner stays on every page so everyone can rewatch anytime.
-//   • Tap ▶ Play → YouTube embed starts WITH sound (the tap is the user
-//     gesture browsers require) and we request fullscreen; a small rotate
-//     hint shows on portrait phones.
+//   • Tap ▶ Play → native <video> (self-hosted MP4, no YouTube branding)
+//     starts WITH sound (the tap is the user gesture browsers require) and
+//     we request fullscreen; a small rotate hint shows on portrait phones.
 // Admin preview: while the flag is OFF the admin still sees everything,
 // marked with a small "preview" chip.
 
@@ -15,12 +15,12 @@ import { useEffect, useRef, useState } from "react";
 const SEEN_KEY = "seen_celebration_video_shark";
 
 type Props = {
-  videoId: string;
+  videoUrl: string;
   lang: "en" | "fa";
   preview: boolean; // true = admin-only preview (flag still off)
 };
 
-export default function CelebrationVideo({ videoId, lang, preview }: Props) {
+export default function CelebrationVideo({ videoUrl, lang, preview }: Props) {
   const fa = lang === "fa";
   const [open, setOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -101,12 +101,12 @@ export default function CelebrationVideo({ videoId, lang, preview }: Props) {
           <div ref={playerBox} className="w-full max-w-3xl">
             {playing ? (
               <div className="relative w-full overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "16 / 9" }}>
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1`}
-                  title="The Prediction"
-                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                  className="absolute inset-0 h-full w-full border-0"
+                <video
+                  src={videoUrl}
+                  autoPlay
+                  playsInline
+                  controls
+                  className="absolute inset-0 h-full w-full"
                 />
                 {showHint && (
                   <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">

@@ -5,7 +5,7 @@ import { getLang, dir } from "@/lib/i18n";
 import { isNight } from "@/lib/theme";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { isFlagSeasonEnabled, isAdmin, isMascotEnabled, isRibbonEnabled, isCelebrationVideoEnabled, getCelebrationVideoId } from "@/lib/admin";
+import { isFlagSeasonEnabled, isAdmin, isMascotEnabled, isRibbonEnabled, isCelebrationVideoEnabled, getCelebrationVideoUrl } from "@/lib/admin";
 import FlagWaveBackground from "@/components/FlagWaveBackground";
 import MascotPeek from "@/components/MascotPeek";
 import MourningRibbon from "@/components/MourningRibbon";
@@ -52,23 +52,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const session = await getSession();
   let showMascot = false;
   let showRibbon = false;
-  let celebrationId = "";
+  let celebrationUrl = "";
   let celebrationOn = false;
   let celebrationPreview = false;
   if (session) {
     const supabase = db();
-    const [admin, mascotOn, ribbonOn, celebOn, celebId] = await Promise.all([
+    const [admin, mascotOn, ribbonOn, celebOn, celebUrl] = await Promise.all([
       isAdmin(supabase, session.displayName),
       isMascotEnabled(supabase),
       isRibbonEnabled(supabase),
       isCelebrationVideoEnabled(supabase),
-      getCelebrationVideoId(supabase),
+      getCelebrationVideoUrl(supabase),
     ]);
     showMascot = admin || mascotOn;
     showRibbon = admin || ribbonOn;
-    // 🦈 V41: live for everyone when the flag is on; admin always previews.
-    celebrationId = celebId;
-    celebrationOn = (celebOn || admin) && !!celebId;
+    // 🦈 V41.1: live for everyone when the flag is on; admin always previews.
+    celebrationUrl = celebUrl;
+    celebrationOn = (celebOn || admin) && !!celebUrl;
     celebrationPreview = admin && !celebOn;
   }
 
@@ -83,7 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {showRibbon && <MourningRibbon />}
         {showMascot && <MascotPeek />}
         {celebrationOn && (
-          <CelebrationVideo videoId={celebrationId} lang={lang} preview={celebrationPreview} />
+          <CelebrationVideo videoUrl={celebrationUrl} lang={lang} preview={celebrationPreview} />
         )}
         {children}
       </body>
